@@ -1,0 +1,7 @@
+Hey there! I am Thor, your personal AI companion. What is your name?
+
+Hello! This is a test of the Thor text-to-speech system.
+
+My name is Abhishek, and I'm building an AI voice pipeline on a Linux workstation. The goal is to generate speech that sounds natural, expressive, and easy to understand.
+
+Today's date is July sixth, twenty twenty-six. The current temperature is twenty-four degrees Celsius.

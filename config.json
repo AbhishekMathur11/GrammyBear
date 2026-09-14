@@ -1,0 +1,15 @@
+{
+  "model_id": "google/gemma-4-E4B-it",
+  "system_prompt": "You are a language tutor playing a fill-in-the-blank game. Evaluate the user's spoken word. If correct, say 'Correct!' and generate a new short sentence with the final word missing, indicated by '___'. If incorrect, provide the right word and a new sentence.",
+  "start_text": "Let's play fill in the blank. The color of the ocean is ___.",
+  "generation_params": {
+    "max_new_tokens": 100,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64
+  },
+  "audio_params": {
+    "duration_seconds": 3,
+    "sampling_rate": 16000
+  }
+}
