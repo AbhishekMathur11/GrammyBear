@@ -18,12 +18,7 @@ FastAPI  port 8003
         └─ Kokoro ONNX                    (TTS in RAM)
 ```
 
-Cloudflare Tunnel publishes FastAPI only. Do not tunnel vLLM.
-
-### Why vLLM died at `--gpu-memory-utilization 0.50`
-
-That flag was unrelated to Cloudflare. The 7B AWQ weights already used **5.29 GiB**, CUDA graphs took more, and KV cache went **negative** (`Available KV cache memory: -2.69 GiB`). Use `scripts/1_vllm.sh`: utilization **0.82**, `max-model-len 1024`, `--enforce-eager` (skips the graph capture that ate VRAM and ~40s). Whisper stays on CPU so it does not fight vLLM.
-
+Cloudflare Tunnel publishes FastAPI only. Do not tunnel 
 ### Learning modes
 
 1. **Sentence finish** — Teddy speaks a stem. You complete it. Qwen judges freely (not a fixed script) and invents a new stem.
