@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TeddyTalk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="min-h-screen bg-amber-50 text-slate-800">
+    <main class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
+      <header class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">TeddyTalk</p>
+          <h1 class="font-display text-3xl font-black text-slate-900">Your teddy language buddy</h1>
+        </div>
+        <div id="conn" class="rounded-full bg-white px-4 py-2 text-sm shadow">Connecting…</div>
+      </header>
+      <p id="banner" class="hidden rounded-2xl bg-rose-100 px-4 py-3 text-rose-900"></p>
+
+      <section class="grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
+        <article class="rounded-3xl bg-white p-6 shadow-lg">
+          <div id="stage" class="stage idle mx-auto">Idle</div>
+          <div id="bear" class="bear idle mx-auto" aria-hidden="true">🧸</div>
+          <p id="status" class="mt-4 text-center text-lg font-semibold">Pick a game to start</p>
+          <p id="prompt" class="mt-2 min-h-[3.5rem] text-center text-2xl font-bold text-amber-900"></p>
+          <canvas id="meter" width="320" height="36" class="mx-auto mt-3 w-full max-w-sm rounded-xl bg-slate-100"></canvas>
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <button id="btn-complete" type="button" class="rounded-2xl bg-amber-500 px-5 py-3 font-bold text-white shadow hover:bg-amber-600">
+              Sentence finish
+            </button>
+            <button id="btn-mistake" type="button" class="rounded-2xl bg-sky-500 px-5 py-3 font-bold text-white shadow hover:bg-sky-600">
+              Find the mistake
+            </button>
+          </div>
+        </article>
+
+        <aside class="flex flex-col gap-4">
+          <div class="heard-card rounded-3xl p-5">
+            <p class="text-xs font-bold uppercase tracking-wide text-sky-800">Teddy just heard</p>
+            <p id="heard" class="mt-2 text-xl font-semibold text-slate-900">Waiting for your voice…</p>
+          </div>
+          <div class="rounded-3xl bg-white p-5 shadow-lg">
+            <p class="text-sm font-bold uppercase text-slate-400">Live board</p>
+            <p id="feedback" class="mt-2 text-lg">Teddy will cheer you on here.</p>
+            <div class="mt-4 flex gap-4 text-sm">
+              <span>Streak <strong id="streak">0</strong></span>
+              <span>Turns <strong id="turns">0</strong></span>
+              <span>Sounds <strong id="phone">—</strong></span>
+            </div>
+          </div>
+          <div class="rounded-3xl bg-amber-100 p-5">
+            <p class="font-bold">How to play</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
+              <li>Click a game. Allow the microphone if the browser asks.</li>
+              <li>You should see a sentence on screen right away, then hear Teddy.</li>
+              <li>Wait for the blue Listening badge before you answer.</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

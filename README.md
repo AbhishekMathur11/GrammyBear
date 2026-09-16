@@ -1,59 +1,100 @@
-# SuperApp - Fill-in-the-Blank Language Learning System
+# TeddyTalk: AI Language Learning Buddy
 
-A real-time language learning application that uses speech recognition and AI to play a fill-in-the-blank game. The user speaks their guess, the system evaluates it, provides feedback, and generates a new sentence for the next round.
+TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** (served by FastAPI from `static/`). There is no separate Next.js app to run.
 
-## System Architecture
+The browser streams 16 kHz PCM from the Web Audio API every 250ms. FastAPI runs STT, asks vLLM (Qwen) to **judge** the answer and **invent the next prompt**, then speaks with Kokoro — all in memory.
 
-The application follows a hub-and-spoke orchestration model:
+## Architecture
 
-1. **User Speech** → Audio Recording (`audio_utils.py`)
-2. **Audio Processing** → Speech-to-Text & Evaluation (`agent.py` with Gemma model)
-3. **Orchestration** → Main control flow (`main.py`)
-4. **Text-to-Speech** → Audio Output (`audio_utils.py`)
-5. **Back to User** → Continuous loop
+```
+Browser  (FastAPI serves static/)
+  getUserMedia → AudioContext PCM 16 kHz / 250ms
+  AudioContext.decodeAudioData ← WAV
+        │  wss://<cloudflare-tunnel>/ws
+        ▼
+FastAPI  port 8003
+        ├─ Faster-Whisper tiny.en on CPU  (leaves the 5070 for vLLM)
+        ├─ vLLM on :8000                  (Qwen2.5-7B-Instruct-AWQ)
+        └─ Kokoro ONNX                    (TTS in RAM)
+```
 
-## Components
+Cloudflare Tunnel publishes FastAPI only. Do not tunnel vLLM.
 
-- `main.py`: Orchestrator that coordinates the flow between components
-- `agent.py`: Contains the SentenceCoachAgent using Google's Gemma model for speech evaluation and response generation
-- `audio_utils.py`: Handles audio recording (sounddevice) and text-to-speech (pyttsx3)
-- `config.json`: Configuration for model, prompts, generation parameters, and audio settings
-- `environment.yml`: Conda environment specification for dependencies
+### Why vLLM died at `--gpu-memory-utilization 0.50`
 
+That flag was unrelated to Cloudflare. The 7B AWQ weights already used **5.29 GiB**, CUDA graphs took more, and KV cache went **negative** (`Available KV cache memory: -2.69 GiB`). Use `scripts/1_vllm.sh`: utilization **0.82**, `max-model-len 1024`, `--enforce-eager` (skips the graph capture that ate VRAM and ~40s). Whisper stays on CPU so it does not fight vLLM.
 
-## How to Run
+### Learning modes
 
-1. **Set up the environment**:
-   ```bash
-   conda env create -f environment.yml
-   conda activate sentence_coach
-   ```
+1. **Sentence finish** — Teddy speaks a stem. You complete it. Qwen judges freely (not a fixed script) and invents a new stem.
+2. **Find the mistake** — Teddy speaks a grammar or pronunciation error. You say the fix. Qwen judges and invents the next broken sentence.
 
-2. **Run the application**:
-   ```bash
-   python main.py
-   ```
+If vLLM is down, a shuffled backup bank is used so the game still runs.
 
-3. **Usage**:
-   - The system will start with an initial fill-in-the-blank sentence
-   - Speak your guess when prompted
-   - The system will evaluate your response and provide feedback
-   - A new sentence will be generated for your next guess
-   - Press Ctrl+C to exit
+## Stack
 
-## Requirements
+| Layer | Choice |
+| --- | --- |
+| GPU | RTX 5070 12GB, almost all for vLLM |
+| Env | Conda `sentence_coach` |
+| UI | One production page: `static/` via FastAPI |
+| STT | Faster-Whisper `tiny.en` CPU |
+| LLM | vLLM `Qwen/Qwen2.5-7B-Instruct-AWQ` |
+| TTS | Kokoro ONNX under `audio_utils/tts/kokoro-tts/models` (read-only) |
 
-- Conda or Python 3.10+
-- Audio input/output device
-- Internet connection (for initial model download)
+`audio_test/`, `audio_utils/`, and `gemma_test/` are left unchanged.
 
-## Configuration
+## How to run (3 terminals)
 
-Adjust settings in `config.json`:
-- Model parameters and generation settings
-- Audio duration and sampling rate
-- Initial prompt and system instructions for the AI tutor
+From the repo, after `conda activate sentence_coach` once in your life and with **ffmpeg** + **cloudflared** installed:
 
-## Notes
+**Terminal 1 — LLM** (wait until it is serving on 8000; first start can take several minutes):
 
-The system uses Google's Gemma 4B instructive model for natural language understanding and generation. Ensure you have access to this model through Hugging Face or adjust the model_id in config.json if using a different model.
+```bash
+chmod +x scripts/*.sh
+./scripts/1_vllm.sh
+```
+
+**Terminal 2 — app** (only after Terminal 1 is healthy):
+
+```bash
+./scripts/2_app.sh
+```
+
+Local UI: [http://localhost:8003](http://localhost:8003)
+
+**Terminal 3 — public HTTPS** (needed for the microphone off localhost):
+
+```bash
+./scripts/3_tunnel.sh
+```
+
+Open the `https://….trycloudflare.com` URL it prints. Allow the mic. Wait for the blue **Listening** badge before you talk.
+
+Do not run `npm` / Next.js. That path is gone on purpose.
+
+## Protocol
+
+* JSON: `start`, `ready` (browser sends this when Teddy finishes talking), `state`, `ui`, `transcript`
+* Binary up: int16 PCM @ 16 kHz
+* Binary down: WAV after `{"type":"audio"}`
+
+The socket ignores your mic until `ready`, so Teddy’s own voice is not scored as your answer.
+
+## Tests
+
+```bash
+conda activate sentence_coach
+python -m unittest tests.test_agent -v
+```
+
+## Troubleshooting
+
+* **`syntax error near unexpected token '('`** — old script quoting. Use the updated `./scripts/1_vllm.sh` (run it with bash, not `sh`).
+* **`Could not find nvcc` / FlashInfer JIT** — you do not need a full CUDA toolkit. The script now sets `VLLM_USE_FLASHINFER_SAMPLER=0` so warmup uses PyTorch sampling. KV cache at 0.82 is fine on the 5070 (~3.8 GiB).
+* **vLLM KV cache / no memory for cache blocks** — you are still on 0.50 utilization or CUDA graphs. Use `./scripts/1_vllm.sh`. Close other GPU apps (`nvidia-smi`).
+* **Long silence after you speak** — old WebM concat never decoded. This build sends PCM and shows **Thinking** as soon as an utterance is detected.
+* **Whisper + vLLM OOM** — keep STT on CPU in `config.json` (`"device": "cpu"`).
+* **No teddy voice** — leave Kokoro files where they are.
+
+Built for the Nerdy AI Hackathon Challenge 2026.

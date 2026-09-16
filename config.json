@@ -1,15 +1,32 @@
 {
-  "model_id": "google/gemma-4-E4B-it",
-  "system_prompt": "You are a language tutor playing a fill-in-the-blank game. Evaluate the user's spoken word. If correct, say 'Correct!' and generate a new short sentence with the final word missing, indicated by '___'. If incorrect, provide the right word and a new sentence.",
-  "start_text": "Let's play fill in the blank. The color of the ocean is ___.",
-  "generation_params": {
-    "max_new_tokens": 100,
-    "temperature": 1.0,
-    "top_p": 0.95,
-    "top_k": 64
+  "llm": {
+    "base_url": "http://127.0.0.1:8000/v1",
+    "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    "api_key": "local",
+    "timeout": 12
   },
-  "audio_params": {
-    "duration_seconds": 3,
-    "sampling_rate": 16000
+  "stt": {
+    "model": "tiny.en",
+    "device": "cpu",
+    "compute_type": "int8"
+  },
+  "tts": {
+    "model_dir": "audio_utils/tts/kokoro-tts/models",
+    "onnx": "kokoro-v1.0.onnx",
+    "voices": "voices-v1.0.bin",
+    "voice": "af_sarah",
+    "lang": "en-us",
+    "speed": 1.15
+  },
+  "audio": {
+    "chunk_ms": 250,
+    "sample_rate": 16000,
+    "silence_rms": 0.018,
+    "silence_ms": 350,
+    "min_speech_ms": 280
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8003
   }
 }

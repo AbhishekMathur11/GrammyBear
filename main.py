@@ -1,53 +1,183 @@
-import json 
-from audio_utils import speak, record_audio
-from agent import SentenceCoachAgent
+import asyncio
+import json
+from pathlib import Path
+from typing import Optional
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from agent import LanguageTutor, TutorEvent, int16_bytes_to_pcm, wav_bytes_to_pcm
+
+ROOT = Path(__file__).resolve().parent
+STATIC = ROOT / "static"
 
 
-def load_config(filepath="config.json"):
-    with open(filepath, 'r') as f:
-        config = json.load(f)
-    return config
+def load_config(filepath: str = "config.json") -> dict:
+    with open(filepath, "r", encoding="utf-8") as handle:
+        return json.load(handle)
 
-def run_orchestrator():
-    config = load_config()
 
-    print("Starting the orchestrator...")
+config = load_config()
+engines: Optional[LanguageTutor] = None
 
-    agent = SentenceCoachAgent(
+app = FastAPI(title="TeddyTalk", version="2.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        model_id = config["model_id"],
-        system_prompt = config["system_prompt"],
-        generation_params = config["generation_params"]
+if STATIC.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 
+
+def shared_engines() -> LanguageTutor:
+    global engines
+    if engines is None:
+        print("Loading tutor engines (first request)…", flush=True)
+        engines = LanguageTutor.from_config(config)
+        print("Tutor engines ready.", flush=True)
+    return engines
+
+
+def new_session(mode: str = "complete") -> LanguageTutor:
+    base = shared_engines()
+    session = LanguageTutor(
+        llm=base.llm,
+        stt=base.stt,
+        tts=base.tts,
+        sample_rate=base.sample_rate,
+        assembler=base.assembler.clone(),
+    )
+    session.set_mode(mode)
+    return session
+
+
+async def emit(ws: WebSocket, events: list[TutorEvent]) -> None:
+    for event in events:
+        if event.type == "audio" and event.audio:
+            await ws.send_text(json.dumps({"type": "audio", **event.payload}))
+            await ws.send_bytes(event.audio)
+            continue
+        await ws.send_text(json.dumps({"type": event.type, **event.payload}))
+
+
+async def emit_then_voice(ws: WebSocket, session: LanguageTutor, events: list[TutorEvent]) -> None:
+    await emit(ws, events)
+    await ws.send_text(
+        json.dumps({"type": "state", "state": "speaking", "feedback": "Teddy is warming up her voice…"})
+    )
+    wav = await asyncio.to_thread(session.pending_speech_audio)
+    if wav:
+        print(f"Sending {len(wav)} bytes of TTS", flush=True)
+        await ws.send_text(json.dumps({"type": "audio", "mime": "audio/wav"}))
+        await ws.send_bytes(wav)
+        return
+    print("TTS returned no audio; opening mic anyway", flush=True)
+    session.mark_ready()
+    await ws.send_text(
+        json.dumps({"type": "state", "state": "listening", "feedback": "Listening… speak now!"})
     )
 
-    start_text = config["start_text"]
-    print(f"Agent: {start_text}")
-    speak(start_text)
 
-    dur = config["audio_params"]["duration_seconds"]
-    sr = config["audio_params"]["sampling_rate"]
+@app.get("/")
+async def read_root():
+    index = STATIC / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    return JSONResponse({"service": "TeddyTalk", "ws": "/ws"})
 
-    while True:
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "TeddyTalk",
+        "engines_loaded": engines is not None,
+        "vllm": config.get("llm", {}).get("base_url"),
+    }
+
+
+@app.websocket("/ws")
+async def tutor_socket(websocket: WebSocket):
+    await websocket.accept()
+    print("WebSocket connected", flush=True)
+    session: Optional[LanguageTutor] = None
+    try:
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "hello",
+                    "codec": "pcm16",
+                    "sample_rate": config.get("audio", {}).get("sample_rate", 16000),
+                    "chunk_ms": config.get("audio", {}).get("chunk_ms", 250),
+                    "modes": ["complete", "mistake"],
+                }
+            )
+        )
+        while True:
+            message = await websocket.receive()
+            if message.get("text"):
+                data = json.loads(message["text"])
+                kind = data.get("type")
+                if kind != "level":
+                    print(f"WS text: {kind}", flush=True)
+                if kind == "start":
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "state",
+                                "state": "thinking",
+                                "feedback": "Starting the game…",
+                            }
+                        )
+                    )
+                    session = await asyncio.to_thread(new_session, data.get("mode", "complete"))
+                    await emit_then_voice(websocket, session, session.start_turn())
+                elif kind == "set_mode" and session is not None:
+                    session.set_mode(data.get("mode", "complete"))
+                    await emit_then_voice(websocket, session, session.start_turn())
+                elif kind == "ready" and session is not None:
+                    session.mark_ready()
+                    await websocket.send_text(
+                        json.dumps({"type": "state", "state": "listening", "feedback": "Listening… speak now!"})
+                    )
+            elif message.get("bytes") is not None and session is not None:
+                payload = message["bytes"]
+                if payload[:4] == b"RIFF":
+                    pcm, _sr = wav_bytes_to_pcm(payload)
+                else:
+                    pcm = int16_bytes_to_pcm(payload)
+                utterance = await asyncio.to_thread(session.take_utterance, pcm, False)
+                if utterance is not None:
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "state",
+                                "state": "thinking",
+                                "feedback": "Teddy heard you. Thinking…",
+                            }
+                        )
+                    )
+                    events = await asyncio.to_thread(session.finish_utterance, utterance)
+                    await emit_then_voice(websocket, session, events)
+    except WebSocketDisconnect:
+        print("WebSocket disconnected", flush=True)
+        return
+    except Exception as exc:
+        print(f"WebSocket error: {exc}", flush=True)
         try:
-            audio_array, _ = record_audio(duration=dur, fs = sr)
-
-            print("Evaluating ....")
-
-            response_text = agent.process_turn(audio_array, sr)
-
-            print(f"Agent: {response_text}")
-            speak(response_text)
-
-        except KeyboardInterrupt:
-            print("Exiting the orchestrator...")
-            break
+            await websocket.send_text(json.dumps({"type": "error", "detail": str(exc)}))
+        except Exception:
+            return
 
 
 if __name__ == "__main__":
-    run_orchestrator()
+    import uvicorn
 
-
-
-
+    server = config.get("server", {})
+    uvicorn.run(app, host=server.get("host", "0.0.0.0"), port=int(server.get("port", 8003)))

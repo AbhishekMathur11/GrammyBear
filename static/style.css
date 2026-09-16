@@ -1,0 +1,99 @@
+:root {
+  --bear-idle: #fbbf24;
+}
+
+.font-display {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.bear {
+  width: 8rem;
+  height: 8rem;
+  display: grid;
+  place-items: center;
+  font-size: 4.5rem;
+  border-radius: 2rem;
+  background: #fff7ed;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.stage {
+  width: fit-content;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage.idle {
+  background: #e2e8f0;
+  color: #475569;
+}
+.stage.listening {
+  background: #bae6fd;
+  color: #075985;
+}
+.stage.thinking {
+  background: #fde68a;
+  color: #92400e;
+}
+.stage.speaking {
+  background: #fdba74;
+  color: #9a3412;
+}
+
+.heard-card {
+  background: linear-gradient(180deg, #e0f2fe, #f0f9ff);
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.12);
+  min-height: 7rem;
+}
+
+.bear.idle {
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+.bear.listening {
+  box-shadow: 0 0 0 10px rgba(56, 189, 248, 0.25);
+  transform: translateY(4px) scale(1.04);
+}
+
+.bear.thinking {
+  animation: tap 0.7s ease-in-out infinite;
+}
+
+.bear.speaking {
+  animation: talk 0.35s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes tap {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes talk {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}

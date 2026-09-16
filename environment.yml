@@ -16,3 +16,13 @@ dependencies:
     - sounddevice
     - pillow
     - torchvision
+    - fastapi
+    - "uvicorn[standard]"
+    - python-multipart
+    - numpy
+    - soundfile
+    - faster-whisper
+    - openai
+    - kokoro-onnx
+    - websockets
+    - pytest
