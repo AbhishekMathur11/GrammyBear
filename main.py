@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from agent import LanguageTutor, TutorEvent, int16_bytes_to_pcm, wav_bytes_to_pcm
+from agent import VOICE_CHOICES, LanguageTutor, TutorEvent, int16_bytes_to_pcm, wav_bytes_to_pcm
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -44,7 +44,7 @@ def shared_engines() -> LanguageTutor:
     return engines
 
 
-def new_session(mode: str = "complete") -> LanguageTutor:
+def new_session(mode: str = "complete", name: str = "", voice: str = "") -> LanguageTutor:
     base = shared_engines()
     session = LanguageTutor(
         llm=base.llm,
@@ -54,6 +54,7 @@ def new_session(mode: str = "complete") -> LanguageTutor:
         assembler=base.assembler.clone(),
     )
     session.set_mode(mode)
+    session.configure(name=name, voice=voice)
     return session
 
 
@@ -116,6 +117,8 @@ async def tutor_socket(websocket: WebSocket):
                     "sample_rate": config.get("audio", {}).get("sample_rate", 16000),
                     "chunk_ms": config.get("audio", {}).get("chunk_ms", 250),
                     "modes": ["complete", "mistake"],
+                    "voices": list(VOICE_CHOICES),
+                    "default_voice": "af_bella",
                 }
             )
         )
@@ -136,15 +139,40 @@ async def tutor_socket(websocket: WebSocket):
                             }
                         )
                     )
-                    session = await asyncio.to_thread(new_session, data.get("mode", "complete"))
-                    await emit_then_voice(websocket, session, session.start_turn())
+                    mode = data.get("mode", "complete")
+                    name = data.get("name", "")
+                    voice = data.get("voice", "")
+                    if session is None:
+                        session = await asyncio.to_thread(new_session, mode, name, voice)
+                    else:
+                        session.configure(name, voice)
+                        session.set_mode(mode)
+                    await emit_then_voice(websocket, session, await asyncio.to_thread(session.start_turn))
                 elif kind == "set_mode" and session is not None:
                     session.set_mode(data.get("mode", "complete"))
-                    await emit_then_voice(websocket, session, session.start_turn())
+                    await emit_then_voice(websocket, session, await asyncio.to_thread(session.start_turn))
                 elif kind == "ready" and session is not None:
                     session.mark_ready()
                     await websocket.send_text(
-                        json.dumps({"type": "state", "state": "listening", "feedback": "Listening… speak now!"})
+                        json.dumps({"type": "state", "state": "listening", "feedback": "I’m listening. Your turn!"})
+                    )
+                elif kind == "idle" and session is not None:
+                    events = await asyncio.to_thread(session.handle_idle)
+                    if events:
+                        await emit_then_voice(websocket, session, events)
+                elif kind == "repeat" and session is not None:
+                    await emit_then_voice(websocket, session, session.replay_prompt())
+                elif kind == "stop" and session is not None:
+                    session.stop_session()
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "type": "state",
+                                "state": "idle",
+                                "feedback": "Paused. Pick a game whenever you’re ready.",
+                                "prompt": "",
+                            }
+                        )
                     )
             elif message.get("bytes") is not None and session is not None:
                 payload = message["bytes"]

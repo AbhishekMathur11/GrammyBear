@@ -75,9 +75,11 @@ Do not run `npm` / Next.js. That path is gone on purpose.
 
 ## Protocol
 
-* JSON: `start`, `ready` (browser sends this when Teddy finishes talking), `state`, `ui`, `transcript`
+* JSON: `start` (mode, name, voice), `ready`, `idle` (no speech for ~8s), `state`, `ui`, `transcript`
 * Binary up: int16 PCM @ 16 kHz
 * Binary down: WAV after `{"type":"audio"}`
+
+Type the child’s name and pick a Kokoro voice (Bella, Emma, Sky, or Michael) before starting a game. Teddy introduces itself **once**, then **explains the chosen game every time you switch modes**. Qwen judges whether an answer is a reasonable fit (not one canned word). New sentences are generated each turn.
 
 The socket ignores your mic until `ready`, so Teddy’s own voice is not scored as your answer.
 

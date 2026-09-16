@@ -3,7 +3,7 @@
     "base_url": "http://127.0.0.1:8000/v1",
     "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
     "api_key": "local",
-    "timeout": 12
+    "timeout": 4.0
   },
   "stt": {
     "model": "tiny.en",
@@ -14,16 +14,16 @@
     "model_dir": "audio_utils/tts/kokoro-tts/models",
     "onnx": "kokoro-v1.0.onnx",
     "voices": "voices-v1.0.bin",
-    "voice": "af_sarah",
+    "voice": "af_bella",
     "lang": "en-us",
-    "speed": 1.15
+    "speed": 0.95
   },
   "audio": {
     "chunk_ms": 250,
     "sample_rate": 16000,
     "silence_rms": 0.018,
-    "silence_ms": 350,
-    "min_speech_ms": 280
+    "silence_ms": 280,
+    "min_speech_ms": 220
   },
   "server": {
     "host": "0.0.0.0",
