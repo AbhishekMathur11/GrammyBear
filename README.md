@@ -56,15 +56,25 @@ chmod +x scripts/*.sh
 ./scripts/2_app.sh
 ```
 
-Local UI: [http://localhost:8003](http://localhost:8003)
+This PC only: [http://localhost:8003](http://localhost:8003)
 
-**Terminal 3 — public HTTPS** (needed for the microphone off localhost):
+**Terminal 3 — public HTTPS** (required for the mic on any other phone/laptop):
 
 ```bash
 ./scripts/3_tunnel.sh
 ```
 
-Open the `https://….trycloudflare.com` URL it prints. Allow the mic. Wait for the blue **Listening** badge before you talk.
+Leave all three scripts running on **this** GPU PC. vLLM stays on `http://127.0.0.1:8000` and is not tunneled.
+
+### Another phone or laptop
+
+Do **not** open `http://localhost` on that device. Localhost there is that device, not this PC.
+
+The script reprints the public URL in a big box as soon as Cloudflare creates it (and writes `.tunnel_url`). Example: `https://random-words.trycloudflare.com` — it changes every time you restart the tunnel.
+2. On the other device, open **that exact HTTPS URL** in a browser. The page is the same UI; audio and `/ws` go through the tunnel to this PC.
+3. Allow the microphone. Wait until the badge says **Live**, pick a name/voice/game, then wait for **Listening** before you talk.
+
+`http://<this-PC-LAN-IP>:8003` (for example `http://192.168.1.20:8003`) can load the page on the same Wi‑Fi, but browsers usually **block the mic** on plain HTTP. Use the Cloudflare HTTPS URL for voice.
 
 Do not run `npm` / Next.js. That path is gone on purpose.
 
