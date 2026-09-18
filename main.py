@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from agent import VOICE_CHOICES, LanguageTutor, TutorEvent, int16_bytes_to_pcm, wav_bytes_to_pcm
 
 ROOT = Path(__file__).resolve().parent
-STATIC = ROOT / "static"
+FRONTEND_DIST = ROOT / "frontend" / "dist"
 
 
 def load_config(filepath: str = "config.json") -> dict:
@@ -31,8 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if STATIC.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
+if (FRONTEND_DIST / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="assets")
 
 
 def shared_engines() -> LanguageTutor:
@@ -87,7 +87,7 @@ async def emit_then_voice(ws: WebSocket, session: LanguageTutor, events: list[Tu
 
 @app.get("/")
 async def read_root():
-    index = STATIC / "index.html"
+    index = FRONTEND_DIST / "index.html"
     if index.exists():
         return FileResponse(index)
     return JSONResponse({"service": "TeddyTalk", "ws": "/ws"})

@@ -1,13 +1,13 @@
 # TeddyTalk: AI Language Learning Buddy
 
-TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** (served by FastAPI from `static/`). There is no separate Next.js app to run.
+TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** — a React/Vite app in `frontend/`, built to static files and served by FastAPI from `frontend/dist/`. There is no separate frontend server to run in production.
 
 The browser streams 16 kHz PCM from the Web Audio API every 250ms. FastAPI runs STT, asks vLLM (Qwen) to **judge** the answer and **invent the next prompt**, then speaks with Kokoro — all in memory.
 
 ## Architecture
 
 ```
-Browser  (FastAPI serves static/)
+Browser  (FastAPI serves frontend/dist/)
   getUserMedia → AudioContext PCM 16 kHz / 250ms
   AudioContext.decodeAudioData ← WAV
         │  wss://<cloudflare-tunnel>/ws
@@ -32,7 +32,7 @@ If vLLM is down, a shuffled backup bank is used so the game still runs.
 | --- | --- |
 | GPU | RTX 5070 12GB, almost all for vLLM |
 | Env | Conda `sentence_coach` |
-| UI | One production page: `static/` via FastAPI |
+| UI | React/Vite app in `frontend/`, built and served as static files by FastAPI |
 | STT | Faster-Whisper `tiny.en` CPU |
 | LLM | vLLM `Qwen/Qwen2.5-7B-Instruct-AWQ` |
 | TTS | Kokoro ONNX under `audio_utils/tts/kokoro-tts/models` (read-only) |
@@ -41,7 +41,7 @@ If vLLM is down, a shuffled backup bank is used so the game still runs.
 
 ## How to run (3 terminals)
 
-From the repo, after `conda activate sentence_coach` once in your life and with **ffmpeg** + **cloudflared** installed:
+From the repo, after `conda activate sentence_coach` once in your life and with **ffmpeg**, **cloudflared**, and **Node.js/npm** installed:
 
 **Terminal 1 — LLM** (wait until it is serving on 8000; first start can take several minutes):
 
@@ -50,7 +50,7 @@ chmod +x scripts/*.sh
 ./scripts/1_vllm.sh
 ```
 
-**Terminal 2 — app** (only after Terminal 1 is healthy):
+**Terminal 2 — app** (only after Terminal 1 is healthy). This builds `frontend/` and starts FastAPI:
 
 ```bash
 ./scripts/2_app.sh
@@ -66,7 +66,7 @@ Local UI: [http://localhost:8003](http://localhost:8003)
 
 Open the `https://….trycloudflare.com` URL it prints. Allow the mic. Wait for the blue **Listening** badge before you talk.
 
-Do not run `npm` / Next.js. That path is gone on purpose.
+`scripts/2_app.sh` runs `npm install && npm run build` in `frontend/` automatically. To iterate on the UI itself with hot reload, run `cd frontend && npm run dev` separately (proxies `/ws` to the FastAPI backend on :8003 — see `frontend/vite.config.ts`).
 
 ## Protocol
 

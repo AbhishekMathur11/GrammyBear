@@ -14,4 +14,9 @@ fi
 conda activate sentence_coach
 set -u
 
+if [ -d "${SCRIPT_DIR}/../frontend" ]; then
+  echo "Building frontend..."
+  (cd "${SCRIPT_DIR}/../frontend" && npm install --silent && npm run build)
+fi
+
 exec python main.py
