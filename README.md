@@ -21,8 +21,8 @@ FastAPI  port 8003
 Cloudflare Tunnel publishes FastAPI only. Do not tunnel 
 ### Learning modes
 
-1. **Sentence finish** — Teddy speaks a stem. You complete it. Qwen judges freely (not a fixed script) and invents a new stem.
-2. **Find the mistake** — Teddy speaks a grammar or pronunciation error. You say the fix. Qwen judges and invents the next broken sentence.
+1. **Finish the Sentence** — Teddy speaks a stem with one missing word from a closed set (prepositions, articles, pronouns, verb tense, plurals, opposites). You say the missing word. Qwen judges freely (not exact match) and invents a new stem from the same closed skill categories, or falls back to the static bank.
+2. **Story Challenge** — Teddy tells a short story situation and asks a question. You answer in your own words. Qwen judges for understanding, not exact wording. Drawn from a fixed bank of situations (no live invention).
 
 If vLLM is down, a shuffled backup bank is used so the game still runs.
 

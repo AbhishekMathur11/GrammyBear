@@ -116,7 +116,7 @@ async def tutor_socket(websocket: WebSocket):
                     "codec": "pcm16",
                     "sample_rate": config.get("audio", {}).get("sample_rate", 16000),
                     "chunk_ms": config.get("audio", {}).get("chunk_ms", 250),
-                    "modes": ["complete", "mistake"],
+                    "modes": ["complete", "story"],
                     "voices": list(VOICE_CHOICES),
                     "default_voice": "af_bella",
                 }

@@ -4,7 +4,7 @@ import { useTeddySession, type GameMode, type UiSnapshot } from './lib/useTeddyS
 /* ─────────────────────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────────────────────── */
-type Screen     = 'home' | 'complete' | 'mistake'
+type Screen     = 'home' | 'complete' | 'story'
 type AudioState = 'bear-speaking' | 'child-speaking' | 'feedback'
 
 /* ─────────────────────────────────────────────────────────────
@@ -229,7 +229,7 @@ const VOICES: Voice[] = [
 function HomeScreen({
   onSelect, childName, onNameChange, voiceId, onVoiceChange, voices,
 }: {
-  onSelect: (g: 'complete' | 'mistake') => void
+  onSelect: (g: 'complete' | 'story') => void
   childName: string
   onNameChange: (name: string) => void
   voiceId: string
@@ -383,9 +383,9 @@ function HomeScreen({
           </div>
         </button>
 
-        {/* Card 2 — Catch the Mistake */}
+        {/* Card 2 — Story Challenge */}
         <button
-          onClick={() => onSelect('mistake')}
+          onClick={() => onSelect('story')}
           className="w-full rounded-[28px] overflow-hidden card-lift text-left shine-btn"
           style={{ background: 'linear-gradient(140deg, #C0F0FF 0%, #5DD8F5 100%)' }}
         >
@@ -401,15 +401,15 @@ function HomeScreen({
                 padding: '12px 8px',
               }}
             >
-              <span style={{ fontSize: 64, lineHeight: 1, display: 'block', filter: 'drop-shadow(0 4px 8px rgba(0,100,160,0.22))' }}>🔍</span>
+              <span style={{ fontSize: 64, lineHeight: 1, display: 'block', filter: 'drop-shadow(0 4px 8px rgba(0,100,160,0.22))' }}>📖</span>
             </div>
             {/* Text */}
             <div className="flex-1 py-5 pl-4 pr-4">
               <p className="font-display text-cyan-900 leading-tight mb-1" style={{ fontSize: 22, fontWeight: 700 }}>
-                Catch the<br />Mistake
+                Story<br />Challenge
               </p>
               <p className="text-cyan-800 font-bold leading-snug mb-4" style={{ fontSize: 13 }}>
-                Listen &amp; fix it! 🕵️
+                Listen &amp; imagine! ✨
               </p>
               <div
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl btn-press font-display text-white"
@@ -494,7 +494,7 @@ function Confetti() {
 function AudioGameScreen({
   game, ui, phase, onBack, onRepeat,
 }: {
-  game: 'complete' | 'mistake'
+  game: 'complete' | 'story'
   ui: UiSnapshot
   phase: string
   onBack: () => void
@@ -540,7 +540,7 @@ function AudioGameScreen({
           ←
         </button>
         <p className="font-display text-purple-700" style={{ fontSize: 17, fontWeight: 700 }}>
-          {game === 'complete' ? 'Finish the Sentence' : 'Catch the Mistake'}
+          {game === 'complete' ? 'Finish the Sentence' : 'Story Challenge'}
         </p>
         {/* Streak */}
         <div
@@ -764,7 +764,7 @@ export default function App() {
                 voices={session.voices}
               />
             )}
-            {(screen === 'complete' || screen === 'mistake') && (
+            {(screen === 'complete' || screen === 'story') && (
               <AudioGameScreen
                 game={screen}
                 ui={session.ui}

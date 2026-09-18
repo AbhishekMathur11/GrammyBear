@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
    and agent.py (see README.md "Protocol" section).
 ───────────────────────────────────────────────────────────── */
 export type Phase = 'idle' | 'listening' | 'thinking' | 'speaking'
-export type GameMode = 'complete' | 'mistake'
+export type GameMode = 'complete' | 'story'
 
 export interface VoiceOption {
   id: string
@@ -24,9 +24,10 @@ export interface UiSnapshot {
   item_id?: string
   stem?: string
   prompt?: string
-  broken?: string
-  kind?: string
-  hint?: string
+  situation?: string
+  question?: string
+  skill?: string
+  difficulty?: string
   feedback?: string
   correct?: boolean
   heard?: string
@@ -36,6 +37,7 @@ export interface UiSnapshot {
   idle?: boolean
   unclear?: boolean
   give_up?: boolean
+  safety_label?: string
 }
 
 export interface TeddySessionState {
