@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 /* ─────────────────────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────────────────────── */
-type Screen     = 'home' | 'sentence' | 'story'
+type Screen     = 'home' | 'complete' | 'mistake'
 type AudioState = 'bear-speaking' | 'child-speaking' | 'feedback'
 
 /* ─────────────────────────────────────────────────────────────
@@ -216,7 +216,24 @@ function Bubble({
 /* ─────────────────────────────────────────────────────────────
    SCREEN 1: HOME
 ───────────────────────────────────────────────────────────── */
-function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void }) {
+type Voice = { id: string; label: string; blurb: string }
+
+const VOICES: Voice[] = [
+  { id: 'af_bella',   label: 'Bella',   blurb: 'Warm and friendly' },
+  { id: 'bf_emma',    label: 'Emma',    blurb: 'Soft British lady' },
+  { id: 'af_sky',     label: 'Sky',     blurb: 'Bright and bouncy' },
+  { id: 'am_michael', label: 'Michael', blurb: 'Kind buddy' },
+]
+
+function HomeScreen({
+  onSelect, childName, onNameChange, voiceId, onVoiceChange,
+}: {
+  onSelect: (g: 'complete' | 'mistake') => void
+  childName: string
+  onNameChange: (name: string) => void
+  voiceId: string
+  onVoiceChange: (id: string) => void
+}) {
   return (
     <div
       className="flex flex-col h-full scroll-hide overflow-y-auto"
@@ -256,6 +273,55 @@ function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void 
         </div>
       </div>
 
+      {/* ── Name + voice picker ─────────────────────── */}
+      <div className="px-6 pt-1 pb-2 flex-shrink-0 flex flex-col gap-3">
+        <label className="flex flex-col gap-1">
+          <span className="font-black uppercase tracking-widest text-purple-400" style={{ fontSize: 10 }}>
+            Your name
+          </span>
+          <input
+            type="text"
+            value={childName}
+            onChange={e => onNameChange(e.target.value)}
+            maxLength={20}
+            placeholder="Sam"
+            className="rounded-2xl px-4 py-2.5 font-display text-purple-800 card-lift"
+            style={{ fontSize: 16, fontWeight: 600, background: 'white', border: 'none', outline: 'none' }}
+          />
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="font-black uppercase tracking-widest text-purple-400" style={{ fontSize: 10 }}>
+            Teddy's voice
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            {VOICES.map(v => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => onVoiceChange(v.id)}
+                className="rounded-2xl px-3 py-2 text-left card-lift"
+                style={{
+                  background: v.id === voiceId ? 'linear-gradient(145deg, #C084FC, #7C3AED)' : 'white',
+                }}
+              >
+                <p
+                  className="font-display leading-tight"
+                  style={{ fontSize: 14, fontWeight: 700, color: v.id === voiceId ? 'white' : '#6B21A8' }}
+                >
+                  {v.label}
+                </p>
+                <p
+                  className="leading-tight"
+                  style={{ fontSize: 10, fontWeight: 700, color: v.id === voiceId ? 'rgba(255,255,255,0.85)' : '#A78BFA' }}
+                >
+                  {v.blurb}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── Divider label ───────────────────────────── */}
       <div className="px-6 pt-2 pb-3 flex-shrink-0">
         <p
@@ -271,7 +337,7 @@ function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void 
 
         {/* Card 1 — Finish the Sentence */}
         <button
-          onClick={() => onSelect('sentence')}
+          onClick={() => onSelect('complete')}
           className="w-full rounded-[28px] overflow-hidden card-lift text-left shine-btn"
           style={{ background: 'linear-gradient(140deg, #FFD6A0 0%, #FFAA5C 100%)' }}
         >
@@ -314,9 +380,9 @@ function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void 
           </div>
         </button>
 
-        {/* Card 2 — Story Adventure */}
+        {/* Card 2 — Catch the Mistake */}
         <button
-          onClick={() => onSelect('story')}
+          onClick={() => onSelect('mistake')}
           className="w-full rounded-[28px] overflow-hidden card-lift text-left shine-btn"
           style={{ background: 'linear-gradient(140deg, #C0F0FF 0%, #5DD8F5 100%)' }}
         >
@@ -332,15 +398,15 @@ function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void 
                 padding: '12px 8px',
               }}
             >
-              <span style={{ fontSize: 64, lineHeight: 1, display: 'block', filter: 'drop-shadow(0 4px 8px rgba(0,100,160,0.22))' }}>📖</span>
+              <span style={{ fontSize: 64, lineHeight: 1, display: 'block', filter: 'drop-shadow(0 4px 8px rgba(0,100,160,0.22))' }}>🔍</span>
             </div>
             {/* Text */}
             <div className="flex-1 py-5 pl-4 pr-4">
               <p className="font-display text-cyan-900 leading-tight mb-1" style={{ fontSize: 22, fontWeight: 700 }}>
-                Story<br />Adventure
+                Catch the<br />Mistake
               </p>
               <p className="text-cyan-800 font-bold leading-snug mb-4" style={{ fontSize: 13 }}>
-                Listen &amp; learn! ✨
+                Listen &amp; fix it! 🕵️
               </p>
               <div
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl btn-press font-display text-white"
@@ -390,30 +456,30 @@ const SENTENCE_STEPS = [
   },
 ]
 
-const STORY_STEPS = [
+const MISTAKE_STEPS = [
   {
     state: 'bear-speaking' as AudioState,
-    bearLabel: 'Story time!',
-    bearPrompt: 'Let\'s go on a story adventure! 📖',
-    ttsCard: 'Once upon a time, a little bear found a magical ___.',
+    bearLabel: 'Teddy says:',
+    bearPrompt: 'Can you catch my mistake? 🔍',
+    ttsCard: 'She don\'t like apples.',
     sttCard: null,
     feedbackText: null,
   },
   {
     state: 'child-speaking' as AudioState,
-    bearLabel: 'Tell me! 👂',
-    bearPrompt: 'What did the bear find?',
-    ttsCard: 'Once upon a time, a little bear found a magical ___.',
-    sttCard: 'The bear found a magical apple!',
+    bearLabel: 'Fix it for me! 👂',
+    bearPrompt: 'Say the sentence the right way!',
+    ttsCard: 'She don\'t like apples.',
+    sttCard: 'She doesn\'t like apples!',
     feedbackText: null,
   },
   {
     state: 'feedback' as AudioState,
-    bearLabel: 'Amazing story! 🌟',
-    bearPrompt: 'You\'re a great storyteller!',
-    ttsCard: 'Once upon a time…',
-    sttCard: 'The bear found a magical apple!',
-    feedbackText: 'Brilliant! ⭐⭐',
+    bearLabel: 'You caught it! 🎉',
+    bearPrompt: 'Great ears!',
+    ttsCard: 'She don\'t like apples.',
+    sttCard: 'She doesn\'t like apples.',
+    feedbackText: 'Nailed it! ⭐',
   },
 ]
 
@@ -475,8 +541,8 @@ function Confetti() {
   )
 }
 
-function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack: () => void }) {
-  const steps   = game === 'sentence' ? SENTENCE_STEPS : STORY_STEPS
+function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBack: () => void }) {
+  const steps   = game === 'complete' ? SENTENCE_STEPS : MISTAKE_STEPS
   const [step, setStep] = useState(0)
   const [showFx, setShowFx] = useState(false)
 
@@ -496,8 +562,8 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
     else         { setStep(0); setShowFx(false) }
   }
 
-  const accent = game === 'sentence' ? '#F97316' : '#06B6D4'
-  const bg     = game === 'sentence'
+  const accent = game === 'complete' ? '#F97316' : '#06B6D4'
+  const bg     = game === 'complete'
     ? 'linear-gradient(168deg, #FFF0E8 0%, #FFE4F8 50%, #F0E8FF 100%)'
     : 'linear-gradient(168deg, #E0F9FF 0%, #E8F5FF 50%, #F0E8FF 100%)'
 
@@ -514,7 +580,7 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
           ←
         </button>
         <p className="font-display text-purple-700" style={{ fontSize: 17, fontWeight: 700 }}>
-          {game === 'sentence' ? 'Finish the Sentence' : 'Story Adventure'}
+          {game === 'complete' ? 'Finish the Sentence' : 'Catch the Mistake'}
         </p>
         {/* Progress dots */}
         <div className="flex gap-1.5 items-center">
@@ -662,6 +728,8 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
 ───────────────────────────────────────────────────────────── */
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
+  const [childName, setChildName] = useState('')
+  const [voiceId, setVoiceId] = useState('af_bella')
 
   return (
     <div
@@ -721,8 +789,16 @@ export default function App() {
 
           {/* Content area */}
           <div style={{ position: 'absolute', top: 46, left: 0, right: 0, bottom: 0 }}>
-            {screen === 'home' && <HomeScreen onSelect={g => setScreen(g)} />}
-            {(screen === 'sentence' || screen === 'story') && (
+            {screen === 'home' && (
+              <HomeScreen
+                onSelect={g => setScreen(g)}
+                childName={childName}
+                onNameChange={setChildName}
+                voiceId={voiceId}
+                onVoiceChange={setVoiceId}
+              />
+            )}
+            {(screen === 'complete' || screen === 'mistake') && (
               <AudioGameScreen game={screen} onBack={() => setScreen('home')} />
             )}
           </div>
