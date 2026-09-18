@@ -1,0 +1,62 @@
+{
+  "total": 100,
+  "correct_predictions": 66,
+  "accuracy": 0.66,
+  "per_label": {
+    "correct": {
+      "precision": 0.88,
+      "recall": 0.4888888888888889,
+      "f1": 0.6285714285714286,
+      "support": 45
+    },
+    "partially_correct": {
+      "precision": 0.6086956521739131,
+      "recall": 0.7,
+      "f1": 0.6511627906976744,
+      "support": 20
+    },
+    "incorrect": {
+      "precision": 0.47619047619047616,
+      "recall": 0.8,
+      "f1": 0.5970149253731344,
+      "support": 25
+    },
+    "no_response": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 10
+    }
+  },
+  "macro_f1": 0.7191872861605593,
+  "confusion_matrix": {
+    "correct": {
+      "correct": 22,
+      "partially_correct": 6,
+      "incorrect": 17,
+      "no_response": 0
+    },
+    "partially_correct": {
+      "correct": 1,
+      "partially_correct": 14,
+      "incorrect": 5,
+      "no_response": 0
+    },
+    "incorrect": {
+      "correct": 2,
+      "partially_correct": 3,
+      "incorrect": 20,
+      "no_response": 0
+    },
+    "no_response": {
+      "correct": 0,
+      "partially_correct": 0,
+      "incorrect": 0,
+      "no_response": 10
+    }
+  },
+  "accuracy_by_game": {
+    "complete_the_sentence": 0.44,
+    "story_challenge": 0.88
+  }
+}
