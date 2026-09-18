@@ -122,10 +122,10 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(tutor.current_item()["expected"], "the leaf")
         self.assertTrue(llm.calls)
         texts = [event.payload["text"] for event in events if event.type == "speak_text"]
-        self.assertGreaterEqual(len(texts), 2)
-        self.assertIn("next one", texts[0].lower())
-        self.assertIn("tiny ant", texts[1].lower())
-        self.assertNotIn("tiny ant", texts[0].lower())
+        self.assertGreaterEqual(len(texts), 1)
+        combined = " ".join(texts).lower()
+        self.assertIn("next one", combined)
+        self.assertIn("tiny ant", combined)
 
     def test_llm_can_invent_next_item(self):
         llm = ScriptedLLM(
@@ -176,6 +176,38 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(self.tutor.state.streak, 0)
         self.assertEqual(self.tutor.state.turns, 0)
 
+    def test_llm_is_the_only_judge_for_completion(self):
+        llm = ScriptedLLM('{"correct": false}')
+        tutor = LanguageTutor(llm=llm, stt=None, tts=None)
+        tutor.item = copy.deepcopy(COMPLETION_ITEMS[0])
+        events = tutor.handle_transcript("the food bowl")
+        ui = next(e for e in events if e.type == "ui" and "correct" in e.payload)
+        self.assertFalse(ui.payload["correct"])
+        self.assertEqual(tutor.state.streak, 0)
+
+    def test_llm_is_the_only_judge_for_story_synonyms(self):
+        llm = ScriptedLLM('{"correct": false}')
+        tutor = LanguageTutor(llm=llm, stt=None, tts=None)
+        tutor.set_mode("story")
+        tutor.item = {
+            "id": "happy",
+            "sentence": "The happy puppy ran to the park.",
+            "target": "happy",
+            "speak": "The happy puppy ran to the park. What's another word for happy?",
+            "stem": "The happy puppy ran to the park.",
+            "expected": "happy",
+        }
+        events = tutor.handle_transcript("spaceship")
+        ui = next(e for e in events if e.type == "ui" and "correct" in e.payload)
+        self.assertFalse(ui.payload["correct"])
+
+    def test_completion_cheer_is_short_celebration(self):
+        self.tutor.set_mode("complete")
+        self.tutor.item = copy.deepcopy(COMPLETION_ITEMS[0])
+        events = self.tutor.handle_transcript("the food bowl")
+        ui = next(e for e in events if e.type == "ui" and e.payload.get("correct") is True)
+        self.assertIn(ui.payload["feedback"], {"You are awesome!", "Way to go!", "Amazing!"})
+
     def test_llm_cannot_praise_a_wrong_answer(self):
         llm = ScriptedLLM('{"correct": false}')
         tutor = LanguageTutor(llm=llm, stt=None, tts=None)
@@ -196,6 +228,7 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(self.tutor.state.streak, 1)
         self.tutor.set_mode("mistake")
         self.assertEqual(self.tutor.state.streak, 0)
+        self.assertEqual(self.tutor.state.best, 1)
         self.assertEqual(self.tutor.state.mode, "mistake")
 
     def test_spoken_reply_stays_short(self):
@@ -235,9 +268,10 @@ class TutorTests(unittest.TestCase):
         self.tutor.set_mode("story")
         self.tutor.start_turn()
         line = self.tutor._pending_line.lower()
-        self.assertIn("write a story", line)
-        self.assertIn("story adventure", line)
+        self.assertIn("another word", line)
+        self.assertIn("guess the synonym", line)
         self.assertNotIn("complete sentences", line)
+        self.assertNotIn("write a story", line)
 
     def test_llm_accepts_another_valid_ending(self):
         llm = ScriptedLLM('{"correct": true}')
@@ -318,31 +352,29 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(similarity("a", "a"), 1.0)
         self.assertEqual(similarity("", "x"), 0.0)
 
-    def test_story_builds_then_narrates_and_rewards(self):
-        self.tutor.set_mode("story")
-        self.assertEqual(self.tutor.state.mode, "story")
-        self.tutor.item = {
-            "id": "open",
-            "stem": "Once upon a time a little bear found a magical",
-            "expected": "lantern",
-            "full": "Once upon a time a little bear found a magical lantern.",
-        }
-        for i in range(6):
-            self.tutor.item = {
-                "id": f"beat-{i}",
-                "stem": "Then they found a shiny",
-                "situation": "Then they found a shiny keyhole.",
-                "question": "What should they use?",
-                "expected": "key",
-                "full": "Then they found a shiny key.",
+    def test_story_accepts_synonym_and_rewards(self):
+        llm = ScriptedLLM('{"correct": true}')
+        tutor = LanguageTutor(llm=llm, stt=None, tts=None)
+        tutor.set_mode("story")
+        self.assertEqual(tutor.state.mode, "story")
+        ui = None
+        for i in range(5):
+            tutor.item = {
+                "id": f"syn-{i}",
+                "sentence": "The happy puppy ran to the park.",
+                "target": "happy",
+                "speak": "The happy puppy ran to the park. What's another word for happy?",
+                "stem": "The happy puppy ran to the park.",
+                "expected": "happy",
+                "full": "The happy puppy ran to the park.",
             }
-            events = self.tutor.handle_transcript("key")
+            events = tutor.handle_transcript("glad")
             ui = next(e for e in events if e.type == "ui" and "correct" in e.payload)
             self.assertTrue(ui.payload["correct"])
         self.assertTrue(ui.payload.get("reward"))
-        self.assertIn("whole story", self.tutor._pending_line.lower())
-        self.assertEqual(self.tutor.state.story_sentences, [])
-        self.assertEqual(self.tutor.state.chapter, 2)
+        self.assertEqual(tutor.state.streak, 5)
+        self.assertNotIn("whole story", tutor._pending_line.lower())
+        self.assertIn("another word", tutor._pending_line.lower())
 
     def test_guard_rejects_slang(self):
         self.tutor.set_mode("complete")

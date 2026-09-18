@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 /* ─────────────────────────────────────────────────────────────
    TYPES
 ───────────────────────────────────────────────────────────── */
-type Screen     = 'home' | 'sentence' | 'story'
+type Screen     = 'home' | 'name' | 'sentence' | 'story'
 type AudioState = 'bear-speaking' | 'child-speaking' | 'feedback'
 
 /* ─────────────────────────────────────────────────────────────
@@ -216,7 +216,15 @@ function Bubble({
 /* ─────────────────────────────────────────────────────────────
    SCREEN 1: HOME
 ───────────────────────────────────────────────────────────── */
-function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'story') => void; points?: number }) {
+function HomeScreen({
+  onSelect,
+  points = 0,
+  childName = '',
+}: {
+  onSelect: (g: 'sentence' | 'story') => void
+  points?: number
+  childName?: string
+}) {
   return (
     <div
       className="flex flex-col h-full scroll-hide overflow-y-auto"
@@ -228,7 +236,7 @@ function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'sto
       <div className="flex items-center justify-between px-6 pt-5 pb-1 flex-shrink-0">
         <div>
           <p className="font-display text-purple-700 leading-none" style={{ fontSize: 32, fontWeight: 700 }}>
-            Hi there! 👋
+            {childName ? `Hi, ${childName}! 👋` : 'Hi there! 👋'}
           </p>
           <p className="text-purple-400 font-bold text-sm mt-0.5">Ready to learn?</p>
         </div>
@@ -314,7 +322,7 @@ function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'sto
           </div>
         </button>
 
-        {/* Card 2 — Story Adventure */}
+        {/* Card 2 — Guess the Synonym */}
         <button
           onClick={() => onSelect('story')}
           className="w-full rounded-[28px] overflow-hidden card-lift text-left shine-btn"
@@ -337,7 +345,7 @@ function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'sto
             {/* Text */}
             <div className="flex-1 py-5 pl-4 pr-4">
               <p className="font-display text-cyan-900 leading-tight mb-1" style={{ fontSize: 22, fontWeight: 700 }}>
-                Story<br />Adventure
+                Guess the<br />Synonym
               </p>
               <p className="text-cyan-800 font-bold leading-snug mb-4" style={{ fontSize: 13 }}>
                 Listen &amp; learn! ✨
@@ -354,6 +362,127 @@ function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'sto
               </div>
             </div>
           </div>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function NameScreen({
+  points = 0,
+  onSubmit,
+  onBack,
+}: {
+  points?: number
+  onSubmit: (name: string) => void
+  onBack: () => void
+}) {
+  const [name, setName] = useState('')
+  const cleaned = name.replace(/[^A-Za-z \-]/g, '').trim()
+  const ready = cleaned.length > 0
+
+  function go() {
+    if (!ready) return
+    onSubmit(cleaned)
+  }
+
+  return (
+    <div
+      className="flex flex-col h-full scroll-hide overflow-y-auto"
+      style={{
+        background: 'linear-gradient(170deg, #EDE4FF 0%, #F9E4FF 38%, #FFE8DC 72%, #FFF3D4 100%)',
+      }}
+    >
+      <div className="flex items-center justify-between px-6 pt-5 pb-1 flex-shrink-0">
+        <div>
+          <p className="font-display text-purple-700 leading-none" style={{ fontSize: 32, fontWeight: 700 }}>
+            Hi there! 👋
+          </p>
+          <p className="text-purple-400 font-bold text-sm mt-0.5">What should Teddy call you?</p>
+        </div>
+        <div
+          className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center card-lift"
+          style={{ background: 'linear-gradient(145deg, #FFE168, #FFB347)' }}
+        >
+          <span style={{ fontSize: 22 }}>⭐</span>
+          <span className="text-yellow-800 font-black text-[10px] leading-none mt-0.5">{points} pts</span>
+        </div>
+      </div>
+
+      <div className="flex items-end justify-center gap-3 px-6 pt-1 pb-0 flex-shrink-0">
+        <div className="bear-float" style={{ marginBottom: -8 }}>
+          <TeddyBear size={176} />
+        </div>
+        <div className="mb-16 flex-shrink-0" style={{ maxWidth: 140 }}>
+          <Bubble color="white" tail="left">
+            <p className="font-display text-purple-700 leading-snug" style={{ fontSize: 17, fontWeight: 600 }}>
+              Tell me your<br />name! ✏️
+            </p>
+          </Bubble>
+        </div>
+      </div>
+
+      <div className="px-6 pt-2 pb-3 flex-shrink-0">
+        <p className="font-display text-center text-purple-700" style={{ fontSize: 26, fontWeight: 700 }}>
+          Write your name ✨
+        </p>
+      </div>
+
+      <div className="px-5 pb-8 flex flex-col gap-4 flex-shrink-0">
+        <input
+          autoFocus
+          value={name}
+          maxLength={14}
+          placeholder="Your name"
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') go()
+          }}
+          className="w-full rounded-[28px] px-6 py-5 font-display text-purple-800 outline-none card-lift"
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            background: 'linear-gradient(140deg, #FFD6A0 0%, #FFAA5C 100%)',
+            border: 'none',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.08), inset 0 1.5px 0 rgba(255,255,255,0.8)',
+          }}
+        />
+        <button
+          onClick={go}
+          disabled={!ready}
+          className="w-full rounded-[28px] overflow-hidden card-lift text-left shine-btn"
+          style={{
+            background: ready
+              ? 'linear-gradient(140deg, #FFD6A0 0%, #FFAA5C 100%)'
+              : 'linear-gradient(140deg, #E9D5FF 0%, #D8B4FE 100%)',
+            opacity: ready ? 1 : 0.75,
+          }}
+        >
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.5)', borderRadius: '28px 28px 0 0' }} />
+          <div className="py-5 px-5">
+            <p className="font-display text-orange-900 leading-tight mb-3" style={{ fontSize: 22, fontWeight: 700 }}>
+              {cleaned ? `Ready, ${cleaned}?` : 'Ready to play?'}
+            </p>
+            <div
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl btn-press font-display text-white"
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                background: ready
+                  ? 'linear-gradient(145deg, #FF8C42, #E55A12)'
+                  : 'linear-gradient(145deg, #C084FC, #7C3AED)',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>▶</span> Play!
+            </div>
+          </div>
+        </button>
+        <button
+          onClick={onBack}
+          className="font-bold text-purple-400"
+          style={{ fontSize: 14 }}
+        >
+          ← Back
         </button>
       </div>
     </div>
@@ -393,8 +522,8 @@ const SENTENCE_STEPS = [
 const STORY_STEPS = [
   {
     state: 'bear-speaking' as AudioState,
-    bearLabel: 'Story time!',
-    bearPrompt: 'Let\'s go on a story adventure! 📖',
+    bearLabel: 'Synonym time!',
+    bearPrompt: 'Say another word that means the same! 📖',
     ttsCard: 'Once upon a time, a little bear found a magical ___.',
     sttCard: null,
     feedbackText: null,
@@ -531,7 +660,7 @@ function AudioGameScreen({
           ←
         </button>
         <p className="font-display text-purple-700" style={{ fontSize: 17, fontWeight: 700 }}>
-          {game === 'sentence' ? 'Finish the Sentence' : 'Story Adventure'}
+          {game === 'sentence' ? 'Finish the Sentence' : 'Guess the Synonym'}
         </p>
         {/* Progress dots */}
         <div className="flex gap-1.5 items-center">
@@ -614,9 +743,6 @@ function AudioGameScreen({
             <p className="font-display text-yellow-800 text-center" style={{ fontSize: 32, fontWeight: 700 }}>
               {fbText}
             </p>
-            <p className="text-yellow-700 font-black text-center text-sm mt-1">
-              You're amazing! 🌟
-            </p>
           </div>
         )}
 
@@ -690,9 +816,6 @@ function AudioGameScreen({
             <p className="font-display text-yellow-800 text-center" style={{ fontSize: 32, fontWeight: 700 }}>
               {fbText}
             </p>
-            <p className="text-yellow-700 font-black text-center text-sm mt-1">
-              You're amazing! 🌟
-            </p>
           </div>
         </div>
       )}
@@ -753,7 +876,20 @@ function useTeddyLive() {
   const [bearPrompt, setBearPrompt] = useState('Let’s play!')
   const [feedbackText, setFeedbackText] = useState<string | null>(null)
   const [reward, setReward] = useState(false)
-  const [points, setPoints] = useState(12)
+  const [points, setPoints] = useState(() => {
+    try {
+      return Math.max(0, Number(window.localStorage.getItem('teddy_best') || 0))
+    } catch {
+      return 0
+    }
+  })
+  const [childName, setChildName] = useState(() => {
+    try {
+      return window.localStorage.getItem('teddy_name') || ''
+    } catch {
+      return ''
+    }
+  })
   const [posLabel, setPosLabel] = useState('')
   const showFb = useRef(false)
   const wsRef = useRef<WebSocket | null>(null)
@@ -768,9 +904,23 @@ function useTeddyLive() {
   const playQueue = useRef(Promise.resolve())
   const idleTimer = useRef<number | null>(null)
   const rewardRef = useRef(false)
-  const pendingStart = useRef<'complete' | 'story' | null>(null)
+  const cheerTimer = useRef<number | null>(null)
+  const pendingStart = useRef<{ mode: 'complete' | 'story'; name: string } | null>(null)
   const expectWav = useRef(false)
   const modeRef = useRef<'complete' | 'story'>('complete')
+  const nameRef = useRef(childName)
+  nameRef.current = childName
+
+  function clearCheer() {
+    if (cheerTimer.current) {
+      window.clearTimeout(cheerTimer.current)
+      cheerTimer.current = null
+    }
+    rewardRef.current = false
+    showFb.current = false
+    setReward(false)
+    setAudioState(speakingRef.current ? 'bear-speaking' : 'child-speaking')
+  }
 
   function disarmIdle() {
     if (idleTimer.current) {
@@ -793,27 +943,56 @@ function useTeddyLive() {
     const nextPrompt = typeof msg.prompt === 'string' ? msg.prompt : stem ? `${stem} ___` : ''
     if (nextPrompt) setPrompt(nextPrompt)
     if (typeof msg.heard === 'string' && msg.heard) setHeard(msg.heard)
-    if (typeof msg.feedback === 'string' && msg.feedback) setFeedbackText(msg.feedback)
-    if (typeof msg.streak === 'number') setPoints(Math.max(12, msg.streak * 5 + (typeof msg.best === 'number' ? msg.best : 0)))
-    if (typeof msg.pos === 'string') setPosLabel(msg.pos)
-    if (msg.correct === true || msg.celebrate === true || msg.reward === true) {
-      showFb.current = true
-      setBearLabel('Wonderful! 🎉')
-      setBearPrompt("You're so smart!")
+    if (typeof msg.streak === 'number' || typeof msg.best === 'number') {
+      const streak = typeof msg.streak === 'number' ? msg.streak : 0
+      const best = typeof msg.best === 'number' ? msg.best : 0
+      setPoints((prev) => {
+        const next = Math.max(prev, streak, best)
+        try {
+          window.localStorage.setItem('teddy_best', String(next))
+        } catch {
+          /* ignore */
+        }
+        return next
+      })
     }
-    if (msg.correct === true || msg.celebrate === true || msg.reward === true) {
+    if (typeof msg.pos === 'string') setPosLabel(msg.pos)
+    const cheers = ['You are awesome!', 'Way to go!', 'Amazing!']
+    const statusFb =
+      typeof msg.feedback === 'string' &&
+      /warming|thinking|listening|starting|paused|heard you|your turn|speak now/i.test(msg.feedback)
+    if (msg.correct === true) {
+      const raw = typeof msg.feedback === 'string' ? msg.feedback.trim() : ''
+      const cheer =
+        /awesome|way to go|amazing/i.test(raw) && raw
+          ? raw
+          : cheers[Math.floor(Math.random() * cheers.length)]
+      showFb.current = true
       rewardRef.current = true
       setReward(true)
-      setFeedbackText(typeof msg.feedback === 'string' && msg.feedback ? msg.feedback : 'Great job! ⭐')
+      setFeedbackText(cheer)
+      setBearLabel('Wonderful! 🎉')
+      setBearPrompt("You're so smart!")
+      if (cheerTimer.current) window.clearTimeout(cheerTimer.current)
+      cheerTimer.current = window.setTimeout(() => {
+        clearCheer()
+      }, 1600)
+    } else if (msg.correct === false) {
+      showFb.current = false
+      rewardRef.current = false
+      setReward(false)
+      if (typeof msg.feedback === 'string' && msg.feedback && !statusFb) {
+        setFeedbackText(msg.feedback)
+      }
     }
     if (typeof msg.coach === 'string' && msg.coach && !showFb.current) {
       setBearPrompt(msg.coach)
-      setBearLabel(msg.mode === 'story' ? 'Story time!' : 'Teddy says:')
+      setBearLabel(msg.mode === 'story' ? 'Synonym time!' : 'Teddy says:')
     }
     if (msg.mode === 'story') {
       if (!showFb.current) {
-        setBearLabel('Story time!')
-        if (typeof msg.coach !== 'string') setBearPrompt("Today we are going to write a story together! 📖")
+        setBearLabel('Synonym time!')
+        if (typeof msg.coach !== 'string') setBearPrompt('Say another word that means the same! 📖')
       }
     } else if (!showFb.current && msg.mode === 'complete') {
       setBearLabel('Teddy says:')
@@ -825,20 +1004,16 @@ function useTeddyLive() {
     if (server === 'listening') {
       sendingRef.current = true
       armIdle()
-      if (!rewardRef.current) {
-        showFb.current = false
-        setAudioState('child-speaking')
-        setBearLabel("I'm listening… 👂")
-        setBearPrompt(
-          modeRef.current === 'story'
-            ? 'What should we do next?'
-            : posLabel
-              ? `Guess the ${posLabel}!`
-              : 'Finish the sentence with the missing word!'
-        )
-      } else {
-        setAudioState('feedback')
-      }
+      clearCheer()
+      setAudioState('child-speaking')
+      setBearLabel("I'm listening… 👂")
+      setBearPrompt(
+        modeRef.current === 'story'
+          ? 'Say another word that means the same!'
+          : posLabel
+            ? `Guess the ${posLabel}!`
+            : 'Finish the sentence with the missing word!'
+      )
       return
     }
     sendingRef.current = false
@@ -1019,7 +1194,7 @@ function useTeddyLive() {
         const queued = pendingStart.current
         if (queued && ws.readyState === 1) {
           pendingStart.current = null
-          ws.send(JSON.stringify({ type: 'start', mode: queued, name: '', voice: 'af_bella' }))
+          ws.send(JSON.stringify({ type: 'start', mode: queued.mode, name: queued.name, voice: 'af_bella' }))
         }
       }
       ws.onclose = () => {
@@ -1035,8 +1210,23 @@ function useTeddyLive() {
     }
   }, [])
 
-  async function begin(mode: 'complete' | 'story') {
+  async function begin(mode: 'complete' | 'story', name = '') {
+    const kid = (name || nameRef.current).replace(/[^A-Za-z \-]/g, ' ').trim().split(/[\s\-]+/)[0] || ''
+    const pretty = kid ? kid.charAt(0).toUpperCase() + kid.slice(1, 14).toLowerCase() : nameRef.current
+    if (pretty) {
+      nameRef.current = pretty
+      setChildName(pretty)
+      try {
+        window.localStorage.setItem('teddy_name', pretty)
+      } catch {
+        /* ignore */
+      }
+    }
     haltVoice()
+    if (cheerTimer.current) {
+      window.clearTimeout(cheerTimer.current)
+      cheerTimer.current = null
+    }
     rewardRef.current = false
     showFb.current = false
     setReward(false)
@@ -1045,9 +1235,9 @@ function useTeddyLive() {
     setAudioState('bear-speaking')
     if (mode === 'story') {
       modeRef.current = 'story'
-      setBearLabel('Story time!')
-      setBearPrompt('Today we are going to write a story together! 📖')
-      setPrompt('A tiny fox finds a picnic basket… What should the fox do?')
+      setBearLabel('Synonym time!')
+      setBearPrompt('Say another word that means the same! 📖')
+      setPrompt('The happy puppy ran to the park. What\'s another word for happy?')
       setPosLabel('')
     } else {
       modeRef.current = 'complete'
@@ -1062,20 +1252,24 @@ function useTeddyLive() {
     } catch {
       /* keep going so Teddy can still talk; tap mic to retry */
     }
-    const payload = JSON.stringify({ type: 'start', mode, name: '', voice: 'af_bella' })
+    const payload = JSON.stringify({ type: 'start', mode, name: nameRef.current, voice: 'af_bella' })
     const ws = wsRef.current
     if (ws && ws.readyState === 1) {
       pendingStart.current = null
       ws.send(payload)
       return
     }
-    pendingStart.current = mode
+    pendingStart.current = { mode, name: nameRef.current }
   }
 
   function stop() {
     haltVoice()
     sendingRef.current = false
     disarmIdle()
+    if (cheerTimer.current) {
+      window.clearTimeout(cheerTimer.current)
+      cheerTimer.current = null
+    }
     rewardRef.current = false
     showFb.current = false
     setReward(false)
@@ -1114,7 +1308,7 @@ function useTeddyLive() {
     if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'repeat' }))
   }
 
-  return { audioState, prompt, heard, bearLabel, bearPrompt, feedbackText, reward, points, posLabel, begin, stop, onMic, onNext }
+  return { audioState, prompt, heard, bearLabel, bearPrompt, feedbackText, reward, points, childName, posLabel, begin, stop, onMic, onNext }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1122,7 +1316,13 @@ function useTeddyLive() {
 ───────────────────────────────────────────────────────────── */
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
+  const [pendingGame, setPendingGame] = useState<'sentence' | 'story' | null>(null)
   const live = useTeddyLive()
+
+  function startGame(game: 'sentence' | 'story', name = '') {
+    setScreen(game)
+    live.begin(game === 'story' ? 'story' : 'complete', name)
+  }
 
   return (
     <div
@@ -1185,10 +1385,22 @@ export default function App() {
             {screen === 'home' && (
               <HomeScreen
                 points={live.points}
+                childName={live.childName}
                 onSelect={g => {
-                  setScreen(g)
-                  live.begin(g === 'story' ? 'story' : 'complete')
+                  if (!live.childName) {
+                    setPendingGame(g)
+                    setScreen('name')
+                    return
+                  }
+                  startGame(g)
                 }}
+              />
+            )}
+            {screen === 'name' && (
+              <NameScreen
+                points={live.points}
+                onBack={() => setScreen('home')}
+                onSubmit={(name) => startGame(pendingGame || 'sentence', name)}
               />
             )}
             {(screen === 'sentence' || screen === 'story') && (

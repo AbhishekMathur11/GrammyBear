@@ -74,7 +74,7 @@ async def emit(ws: WebSocket, events: list[TutorEvent]) -> None:
 async def emit_then_voice(ws: WebSocket, session: LanguageTutor, events: list[TutorEvent]) -> None:
     await emit(ws, events)
     await ws.send_text(
-        json.dumps({"type": "state", "state": "speaking", "feedback": "Teddy is warming up her voice…"})
+        json.dumps({"type": "state", "state": "speaking"})
     )
     wav = await asyncio.to_thread(session.pending_speech_audio)
     if wav:
@@ -189,15 +189,6 @@ async def tutor_socket(websocket: WebSocket):
                     pcm = int16_bytes_to_pcm(payload)
                 utterance = await asyncio.to_thread(session.take_utterance, pcm, False)
                 if utterance is not None:
-                    await websocket.send_text(
-                        json.dumps(
-                            {
-                                "type": "state",
-                                "state": "thinking",
-                                "feedback": "Teddy heard you. Thinking…",
-                            }
-                        )
-                    )
                     events = await asyncio.to_thread(session.finish_utterance, utterance)
                     await emit_then_voice(websocket, session, events)
     except WebSocketDisconnect:

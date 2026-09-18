@@ -16,7 +16,7 @@
     "voices": "voices-v1.0.bin",
     "voice": "af_bella",
     "lang": "en-us",
-    "speed": 0.95
+    "speed": 1.08
   },
   "audio": {
     "chunk_ms": 250,
