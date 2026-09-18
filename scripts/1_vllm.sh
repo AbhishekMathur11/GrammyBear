@@ -21,11 +21,16 @@ export VLLM_USE_FLASHINFER_SAMPLER=0
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_DEEP_GEMM_WARMUP=skip
 export VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# vLLM 0.29 upgrades AWQ to Marlin and unpacks weights on GPU (~680MiB extra).
+# That OOMs a 12GB card after the 14B AWQ weights are already loaded.
+export VLLM_BATCH_INVARIANT=1
 
-exec vllm serve Qwen/Qwen2.5-7B-Instruct-AWQ \
+exec vllm serve Qwen/Qwen2.5-14B-Instruct-AWQ \
   --quantization awq \
-  --gpu-memory-utilization 0.82 \
-  --max-model-len 1024 \
+  --dtype half \
+  --gpu-memory-utilization 0.88 \
+  --max-model-len 512 \
   --max-num-seqs 1 \
   --enforce-eager \
   --host 127.0.0.1 \

@@ -1,0 +1,299 @@
+{
+  "model": "qwen2.5-7b-instruct-awq",
+  "load_error": null,
+  "status": "evaluated",
+  "n": 486,
+  "passed": 400,
+  "failed": 86,
+  "pass_rate": 0.823,
+  "pass_rate_ci95": [
+    0.7866,
+    0.8544
+  ],
+  "overall": {
+    "example_score": 0.9146,
+    "example_score_ci95": [
+      0.9003,
+      0.9288
+    ],
+    "correctness": 0.9066,
+    "semantic_preservation": 0.8933,
+    "ground_truth_agreement": 0.916,
+    "instruction_following": 0.9828,
+    "fluency": 0.8863,
+    "score_std": 0.1608,
+    "score_variance": 0.0258
+  },
+  "error_counts": {
+    "completely_correct": 306,
+    "minor_issue": 118,
+    "substantive": 26,
+    "major_failure": 36,
+    "catastrophic": 26
+  },
+  "major_error_rate": 0.1276,
+  "minor_error_rate": 0.2428,
+  "catastrophic_rate": 0.0535,
+  "difficult_example_score": 0.8909,
+  "difficult_n": 180,
+  "per_category": {
+    "adversarial": {
+      "n": 1,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "already_correct": {
+      "n": 44,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "ambiguity": {
+      "n": 3,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "articles": {
+      "n": 18,
+      "example_score": 0.949,
+      "correctness": 0.9311,
+      "pass_rate": 0.8889,
+      "major_error_rate": 0.1111
+    },
+    "awkward_phrasing": {
+      "n": 7,
+      "example_score": 0.9353,
+      "correctness": 0.9412,
+      "pass_rate": 0.8571,
+      "major_error_rate": 0.1429
+    },
+    "capitalization": {
+      "n": 7,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "concise_rewriting": {
+      "n": 4,
+      "example_score": 0.8959,
+      "correctness": 0.8218,
+      "pass_rate": 0.5,
+      "major_error_rate": 0.5
+    },
+    "context_dependent": {
+      "n": 2,
+      "example_score": 0.9622,
+      "correctness": 0.9709,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "formal_informal": {
+      "n": 6,
+      "example_score": 0.8736,
+      "correctness": 0.8199,
+      "pass_rate": 0.3333,
+      "major_error_rate": 0.6667
+    },
+    "fragments": {
+      "n": 7,
+      "example_score": 0.8613,
+      "correctness": 0.7077,
+      "pass_rate": 0.1429,
+      "major_error_rate": 0.8571
+    },
+    "invent_complete": {
+      "n": 12,
+      "example_score": 0.823,
+      "correctness": 0.8,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "invent_mistake": {
+      "n": 12,
+      "example_score": 0.788,
+      "correctness": 0.75,
+      "pass_rate": 0.0,
+      "major_error_rate": 0.0
+    },
+    "judge_completion": {
+      "n": 61,
+      "example_score": 0.9461,
+      "correctness": 0.9344,
+      "pass_rate": 0.9344,
+      "major_error_rate": 0.0656
+    },
+    "judge_mistake": {
+      "n": 58,
+      "example_score": 0.7265,
+      "correctness": 0.6207,
+      "pass_rate": 0.6207,
+      "major_error_rate": 0.3793
+    },
+    "meaning_preservation": {
+      "n": 1,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "multiple_errors": {
+      "n": 11,
+      "example_score": 0.9364,
+      "correctness": 0.9949,
+      "pass_rate": 0.6364,
+      "major_error_rate": 0.2727
+    },
+    "multiple_valid": {
+      "n": 9,
+      "example_score": 0.9711,
+      "correctness": 0.999,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "natural_english": {
+      "n": 9,
+      "example_score": 0.8424,
+      "correctness": 0.7717,
+      "pass_rate": 0.5556,
+      "major_error_rate": 0.4444
+    },
+    "prepositions": {
+      "n": 19,
+      "example_score": 0.9764,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "pronouns": {
+      "n": 11,
+      "example_score": 0.9205,
+      "correctness": 0.9356,
+      "pass_rate": 0.6364,
+      "major_error_rate": 0.1818
+    },
+    "punctuation": {
+      "n": 10,
+      "example_score": 0.9683,
+      "correctness": 1.0,
+      "pass_rate": 0.9,
+      "major_error_rate": 0.0
+    },
+    "redundant_wording": {
+      "n": 9,
+      "example_score": 0.9156,
+      "correctness": 0.8617,
+      "pass_rate": 0.6667,
+      "major_error_rate": 0.3333
+    },
+    "run_on": {
+      "n": 8,
+      "example_score": 0.9718,
+      "correctness": 0.9912,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "sentence_structure": {
+      "n": 5,
+      "example_score": 0.9609,
+      "correctness": 1.0,
+      "pass_rate": 0.8,
+      "major_error_rate": 0.2
+    },
+    "spelling": {
+      "n": 22,
+      "example_score": 0.9223,
+      "correctness": 0.9416,
+      "pass_rate": 0.7273,
+      "major_error_rate": 0.1364
+    },
+    "subject_verb_agreement": {
+      "n": 75,
+      "example_score": 0.9564,
+      "correctness": 0.9811,
+      "pass_rate": 0.9733,
+      "major_error_rate": 0.0267
+    },
+    "subtle_distinctions": {
+      "n": 5,
+      "example_score": 0.9711,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    },
+    "verb_tense": {
+      "n": 29,
+      "example_score": 0.9338,
+      "correctness": 0.9572,
+      "pass_rate": 0.7931,
+      "major_error_rate": 0.069
+    },
+    "word_choice": {
+      "n": 5,
+      "example_score": 0.9273,
+      "correctness": 0.9293,
+      "pass_rate": 0.6,
+      "major_error_rate": 0.2
+    },
+    "word_order": {
+      "n": 16,
+      "example_score": 0.979,
+      "correctness": 1.0,
+      "pass_rate": 1.0,
+      "major_error_rate": 0.0
+    }
+  },
+  "per_difficulty": {
+    "adversarial": {
+      "n": 26,
+      "example_score": 0.8597,
+      "correctness": 0.8297,
+      "pass_rate": 0.7308,
+      "major_error_rate": 0.2308
+    },
+    "easy": {
+      "n": 161,
+      "example_score": 0.9425,
+      "correctness": 0.9544,
+      "pass_rate": 0.8944,
+      "major_error_rate": 0.0745
+    },
+    "hard": {
+      "n": 154,
+      "example_score": 0.8962,
+      "correctness": 0.8849,
+      "pass_rate": 0.7987,
+      "major_error_rate": 0.1104
+    },
+    "medium": {
+      "n": 145,
+      "example_score": 0.9129,
+      "correctness": 0.8904,
+      "pass_rate": 0.7862,
+      "major_error_rate": 0.1862
+    }
+  },
+  "worst_category": "judge_mistake",
+  "worst_category_correctness": 0.6207,
+  "inference": {
+    "backend": "vllm",
+    "seconds": 20.92,
+    "n_prompts": 486
+  },
+  "contender": {
+    "name": "qwen2.5-7b-instruct-awq",
+    "hf_id": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    "provider": "vllm",
+    "quantization": "awq",
+    "chat_template": "qwen",
+    "enable_thinking": false,
+    "trust_remote_code": true,
+    "max_model_len": 1024,
+    "gpu_memory_utilization": 0.82
+  }
+}

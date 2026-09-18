@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="420" viewBox="0 0 920 420">
+<rect width="100%" height="100%" fill="#0f1419"/>
+<text x="460.0" y="28" fill="#e8eef4" text-anchor="middle" font-size="16" font-family="sans-serif">Score std (lower is more consistent)</text>
+<line x1="160" y1="48.0" x2="896" y2="48.0" stroke="#2a3340" />
+<text x="152" y="52.0" fill="#9aa7b5" text-anchor="end" font-size="11" font-family="sans-serif">1.00</text>
+<line x1="160" y1="127.0" x2="896" y2="127.0" stroke="#2a3340" />
+<text x="152" y="131.0" fill="#9aa7b5" text-anchor="end" font-size="11" font-family="sans-serif">0.75</text>
+<line x1="160" y1="206.0" x2="896" y2="206.0" stroke="#2a3340" />
+<text x="152" y="210.0" fill="#9aa7b5" text-anchor="end" font-size="11" font-family="sans-serif">0.50</text>
+<line x1="160" y1="285.0" x2="896" y2="285.0" stroke="#2a3340" />
+<text x="152" y="289.0" fill="#9aa7b5" text-anchor="end" font-size="11" font-family="sans-serif">0.25</text>
+<line x1="160" y1="364.0" x2="896" y2="364.0" stroke="#2a3340" />
+<text x="152" y="368.0" fill="#9aa7b5" text-anchor="end" font-size="11" font-family="sans-serif">0.00</text>
+<rect x="215.2" y="267.8" width="257.6" height="96.2" fill="#5b8def" rx="4"/>
+<text x="344.0" y="402" fill="#c5d0da" text-anchor="middle" font-size="10" font-family="sans-serif">tinyllama-1.1b-cha</text>
+<text x="344.0" y="261.8" fill="#e8eef4" text-anchor="middle" font-size="11" font-family="sans-serif">0.30</text>
+<rect x="583.2" y="313.2" width="257.6" height="50.8" fill="#3ccf91" rx="4"/>
+<text x="712.0" y="402" fill="#c5d0da" text-anchor="middle" font-size="10" font-family="sans-serif">qwen2.5-7b-instruc</text>
+<text x="712.0" y="307.2" fill="#e8eef4" text-anchor="middle" font-size="11" font-family="sans-serif">0.16</text>
+</svg>

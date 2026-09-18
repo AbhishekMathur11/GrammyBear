@@ -1,28 +1,33 @@
 # TeddyTalk: AI Language Learning Buddy
 
-TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** (served by FastAPI from `static/`). There is no separate Next.js app to run.
+TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** (the Figma React screen, built into `ui-figma/dist` and served by FastAPI). Catch-the-Mistake stays in the tutor code but is not on this home screen.
 
 The browser streams 16 kHz PCM from the Web Audio API every 250ms. FastAPI runs STT, asks vLLM (Qwen) to **judge** the answer and **invent the next prompt**, then speaks with Kokoro — all in memory.
 
 ## Architecture
 
 ```
-Browser  (FastAPI serves static/)
+Browser  (FastAPI serves ui-figma/dist)
   getUserMedia → AudioContext PCM 16 kHz / 250ms
   AudioContext.decodeAudioData ← WAV
         │  wss://<cloudflare-tunnel>/ws
         ▼
 FastAPI  port 8003
         ├─ Faster-Whisper tiny.en on CPU  (leaves the 5070 for vLLM)
-        ├─ vLLM on :8000                  (Qwen2.5-7B-Instruct-AWQ)
+        ├─ vLLM on :8000                  (Qwen/Qwen2.5-14B-Instruct-AWQ)
         └─ Kokoro ONNX                    (TTS in RAM)
 ```
 
-Cloudflare Tunnel publishes FastAPI only. Do not tunnel 
+Cloudflare Tunnel publishes FastAPI only. Do not tunnel vLLM.
+
+### Why vLLM died at `--gpu-memory-utilization 0.50`
+
+That flag was unrelated to Cloudflare. The 14B AWQ weights need almost all of the 12GB card. Use `scripts/1_vllm.sh`: `Qwen/Qwen2.5-14B-Instruct-AWQ`, utilization **0.88**, `max-model-len 512`, `--enforce-eager`, `max-num-seqs 1`. Marlin unpack is disabled (`VLLM_BATCH_INVARIANT=1`) so vLLM does not OOM while converting AWQ weights. Whisper stays on CPU so it does not fight vLLM.
+
 ### Learning modes
 
 1. **Sentence finish** — Teddy speaks a stem. You complete it. Qwen judges freely (not a fixed script) and invents a new stem.
-2. **Find the mistake** — Teddy speaks a grammar or pronunciation error. You say the fix. Qwen judges and invents the next broken sentence.
+2. **Story Adventure** — Teddy starts a fill-in-the-blank line. Any kid-safe ending is fine. The next line continues the tale. After five good beats, Teddy narrates the whole chapter (star-party popup). Catch-the-Mistake remains in the backend unused by this UI.
 
 If vLLM is down, a shuffled backup bank is used so the game still runs.
 
@@ -32,9 +37,9 @@ If vLLM is down, a shuffled backup bank is used so the game still runs.
 | --- | --- |
 | GPU | RTX 5070 12GB, almost all for vLLM |
 | Env | Conda `sentence_coach` |
-| UI | One production page: `static/` via FastAPI |
+| UI | Figma React (`ui-figma/`), built by `scripts/2_app.sh`, served from FastAPI |
 | STT | Faster-Whisper `tiny.en` CPU |
-| LLM | vLLM `Qwen/Qwen2.5-7B-Instruct-AWQ` |
+| LLM | vLLM `Qwen/Qwen2.5-14B-Instruct-AWQ` |
 | TTS | Kokoro ONNX under `audio_utils/tts/kokoro-tts/models` (read-only) |
 
 `audio_test/`, `audio_utils/`, and `gemma_test/` are left unchanged.
@@ -70,13 +75,13 @@ Leave all three scripts running on **this** GPU PC. vLLM stays on `http://127.0.
 
 Do **not** open `http://localhost` on that device. Localhost there is that device, not this PC.
 
-The script reprints the public URL in a big box as soon as Cloudflare creates it (and writes `.tunnel_url`). Example: `https://random-words.trycloudflare.com` — it changes every time you restart the tunnel.
-2. On the other device, open **that exact HTTPS URL** in a browser. The page is the same UI; audio and `/ws` go through the tunnel to this PC.
-3. Allow the microphone. Wait until the badge says **Live**, pick a name/voice/game, then wait for **Listening** before you talk.
+Other devices: open **[https://teddytalk.loca.lt](https://teddytalk.loca.lt)** (named by `scripts/3_tunnel.sh`). If loca.lt shows a click-through page, tap Continue once, then allow the mic.
 
-`http://<this-PC-LAN-IP>:8003` (for example `http://192.168.1.20:8003`) can load the page on the same Wi‑Fi, but browsers usually **block the mic** on plain HTTP. Use the Cloudflare HTTPS URL for voice.
+To use your own domain instead, set `CLOUDFLARED_TUNNEL_TOKEN` and put that hostname in `config.json` → `tunnel.public_url`.
 
-Do not run `npm` / Next.js. That path is gone on purpose.
+`http://<this-PC-LAN-IP>:8003` can load the page on the same Wi‑Fi, but browsers usually **block the mic** on plain HTTP. Use the HTTPS URL for voice.
+
+`scripts/2_app.sh` runs `npm run build` in `ui-figma` then starts FastAPI. Do not run a second frontend server.
 
 ## Protocol
 

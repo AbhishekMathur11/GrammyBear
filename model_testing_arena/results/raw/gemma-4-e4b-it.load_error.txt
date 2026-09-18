@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/abhishek-mathur/projects/toyland/SuperApp/model_testing_arena/eval.py", line 932, in evaluate_contender
+    outputs, inf_meta = run_vllm(contender, examples, gen, config.get("vllm") or {}, local_only)
+  File "/home/abhishek-mathur/projects/toyland/SuperApp/model_testing_arena/eval.py", line 896, in run_vllm
+    llm = LLM(**llm_kwargs)
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/entrypoints/llm.py", line 343, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/llm_engine.py", line 179, in from_engine_args
+    return cls(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/llm_engine.py", line 105, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 110, in make_client
+    return SyncMPClient(vllm_config, executor_class, log_stats)
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 813, in __init__
+    super().__init__(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/core_client.py", line 609, in __init__
+    with launch_core_engines(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/contextlib.py", line 142, in __exit__
+    next(self.gen)
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/utils.py", line 1240, in launch_core_engines
+    wait_for_engine_startup(
+  File "/home/abhishek-mathur/miniconda3/envs/sentence_coach/lib/python3.10/site-packages/vllm/v1/engine/utils.py", line 1320, in wait_for_engine_startup
+    raise RuntimeError(
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

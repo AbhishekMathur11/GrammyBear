@@ -1,0 +1,1 @@
+{"model": "glm-4-9b-chat-gptq", "example_id": null, "status": "failed_to_load", "failure_class": "other", "load_error": "AttributeError: 'TypeError' object has no attribute 'lower'", "attempted_examples": 486}

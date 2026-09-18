@@ -1,12 +1,12 @@
 {
   "llm": {
     "base_url": "http://127.0.0.1:8000/v1",
-    "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    "model": "Qwen/Qwen2.5-14B-Instruct-AWQ",
     "api_key": "local",
-    "timeout": 4.0
+    "timeout": 12.0
   },
   "stt": {
-    "model": "tiny.en",
+    "model": "base.en",
     "device": "cpu",
     "compute_type": "int8"
   },
@@ -28,5 +28,10 @@
   "server": {
     "host": "0.0.0.0",
     "port": 8003
+  },
+  "tunnel": {
+    "public_url": "https://teddytalk.loca.lt",
+    "subdomain": "teddytalk",
+    "token_env": "CLOUDFLARED_TUNNEL_TOKEN"
   }
 }

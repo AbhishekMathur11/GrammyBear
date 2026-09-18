@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 from pathlib import Path
 from typing import Optional
@@ -12,6 +13,7 @@ from agent import VOICE_CHOICES, LanguageTutor, TutorEvent, int16_bytes_to_pcm, 
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
+FIGMA_DIST = ROOT / "ui-figma" / "dist"
 
 
 def load_config(filepath: str = "config.json") -> dict:
@@ -33,6 +35,8 @@ app.add_middleware(
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
+if (FIGMA_DIST / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(FIGMA_DIST / "assets")), name="figma-assets")
 
 
 def shared_engines() -> LanguageTutor:
@@ -61,8 +65,8 @@ def new_session(mode: str = "complete", name: str = "", voice: str = "") -> Lang
 async def emit(ws: WebSocket, events: list[TutorEvent]) -> None:
     for event in events:
         if event.type == "audio" and event.audio:
-            await ws.send_text(json.dumps({"type": "audio", **event.payload}))
-            await ws.send_bytes(event.audio)
+            b64 = base64.b64encode(event.audio).decode("ascii")
+            await ws.send_text(json.dumps({"type": "audio", "mime": "audio/wav", "b64": b64, **event.payload}))
             continue
         await ws.send_text(json.dumps({"type": event.type, **event.payload}))
 
@@ -75,8 +79,8 @@ async def emit_then_voice(ws: WebSocket, session: LanguageTutor, events: list[Tu
     wav = await asyncio.to_thread(session.pending_speech_audio)
     if wav:
         print(f"Sending {len(wav)} bytes of TTS", flush=True)
-        await ws.send_text(json.dumps({"type": "audio", "mime": "audio/wav"}))
-        await ws.send_bytes(wav)
+        b64 = base64.b64encode(wav).decode("ascii")
+        await ws.send_text(json.dumps({"type": "audio", "mime": "audio/wav", "b64": b64}))
         return
     print("TTS returned no audio; opening mic anyway", flush=True)
     session.mark_ready()
@@ -87,9 +91,9 @@ async def emit_then_voice(ws: WebSocket, session: LanguageTutor, events: list[Tu
 
 @app.get("/")
 async def read_root():
-    index = STATIC / "index.html"
-    if index.exists():
-        return FileResponse(index)
+    for index in (FIGMA_DIST / "index.html", STATIC / "index.html"):
+        if index.exists():
+            return FileResponse(index)
     return JSONResponse({"service": "TeddyTalk", "ws": "/ws"})
 
 
@@ -116,7 +120,7 @@ async def tutor_socket(websocket: WebSocket):
                     "codec": "pcm16",
                     "sample_rate": config.get("audio", {}).get("sample_rate", 16000),
                     "chunk_ms": config.get("audio", {}).get("chunk_ms", 250),
-                    "modes": ["complete", "mistake"],
+                    "modes": ["complete", "story", "mistake"],
                     "voices": list(VOICE_CHOICES),
                     "default_voice": "af_bella",
                 }
@@ -124,6 +128,9 @@ async def tutor_socket(websocket: WebSocket):
         )
         while True:
             message = await websocket.receive()
+            if message.get("type") == "websocket.disconnect":
+                print("WebSocket disconnected", flush=True)
+                return
             if message.get("text"):
                 data = json.loads(message["text"])
                 kind = data.get("type")

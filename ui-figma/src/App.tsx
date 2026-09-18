@@ -216,7 +216,7 @@ function Bubble({
 /* ─────────────────────────────────────────────────────────────
    SCREEN 1: HOME
 ───────────────────────────────────────────────────────────── */
-function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void }) {
+function HomeScreen({ onSelect, points = 12 }: { onSelect: (g: 'sentence' | 'story') => void; points?: number }) {
   return (
     <div
       className="flex flex-col h-full scroll-hide overflow-y-auto"
@@ -238,7 +238,7 @@ function HomeScreen({ onSelect }: { onSelect: (g: 'sentence' | 'story') => void 
           style={{ background: 'linear-gradient(145deg, #FFE168, #FFB347)' }}
         >
           <span style={{ fontSize: 22 }}>⭐</span>
-          <span className="text-yellow-800 font-black text-[10px] leading-none mt-0.5">12 pts</span>
+          <span className="text-yellow-800 font-black text-[10px] leading-none mt-0.5">{points} pts</span>
         </div>
       </div>
 
@@ -475,34 +475,51 @@ function Confetti() {
   )
 }
 
-function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack: () => void }) {
-  const steps   = game === 'sentence' ? SENTENCE_STEPS : STORY_STEPS
-  const [step, setStep] = useState(0)
-  const [showFx, setShowFx] = useState(false)
-
-  const cur     = steps[step]
-  const isLast  = step === steps.length - 1
-  const isFb    = cur.state === 'feedback'
-  const isBear  = cur.state === 'bear-speaking'
-  const isChild = cur.state === 'child-speaking'
-
-  useEffect(() => {
-    if (isFb) { setTimeout(() => setShowFx(true), 80) }
-    else       { setShowFx(false) }
-  }, [step])
-
-  function advance() {
-    if (!isLast) setStep(s => s + 1)
-    else         { setStep(0); setShowFx(false) }
-  }
+function AudioGameScreen({
+  game,
+  onBack,
+  audioState,
+  prompt,
+  heard,
+  bearLabel,
+  bearPrompt,
+  feedbackText,
+  posLabel,
+  reward,
+  onMic,
+  onNext,
+}: {
+  game: 'sentence' | 'story'
+  onBack: () => void
+  audioState: AudioState
+  prompt: string
+  heard: string | null
+  bearLabel: string
+  bearPrompt: string
+  feedbackText: string | null
+  posLabel: string
+  reward: boolean
+  onMic: () => void
+  onNext: () => void
+}) {
+  const isFb = audioState === 'feedback' || reward
+  const isBear = audioState === 'bear-speaking'
+  const isChild = audioState === 'child-speaking'
+  const showFx = isFb
+  const steps = game === 'sentence' ? SENTENCE_STEPS : STORY_STEPS
+  const step = isBear ? 0 : isChild ? 1 : 2
 
   const accent = game === 'sentence' ? '#F97316' : '#06B6D4'
-  const bg     = game === 'sentence'
+  const bg = game === 'sentence'
     ? 'linear-gradient(168deg, #FFF0E8 0%, #FFE4F8 50%, #F0E8FF 100%)'
     : 'linear-gradient(168deg, #E0F9FF 0%, #E8F5FF 50%, #F0E8FF 100%)'
 
+  const ttsCard = prompt || (game === 'sentence' ? SENTENCE_STEPS[0].ttsCard : STORY_STEPS[0].ttsCard)
+  const sttCard = heard
+  const fbText = feedbackText || 'Great job! ⭐'
+
   return (
-    <div className="flex flex-col h-full" style={{ background: bg }}>
+    <div className="flex flex-col h-full relative" style={{ background: bg }}>
 
       {/* ── Top bar ──────────────────────────────── */}
       <div className="flex items-center justify-between px-5 pt-5 pb-2 flex-shrink-0">
@@ -541,10 +558,10 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
           <div className="bubble-breathe">
             <Bubble color="white" tail="left">
               <p className="text-purple-600 font-black leading-tight" style={{ fontSize: 12 }}>
-                {cur.bearLabel}
+                {bearLabel}
               </p>
               <p className="font-display text-purple-800 leading-snug mt-0.5" style={{ fontSize: 15, fontWeight: 600 }}>
-                {cur.bearPrompt}
+                {bearPrompt}
               </p>
             </Bubble>
           </div>
@@ -572,8 +589,13 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
             </span>
           </div>
           <p className="font-display text-purple-900 leading-snug" style={{ fontSize: 24, fontWeight: 700 }}>
-            {cur.ttsCard}
+            {ttsCard}
           </p>
+          {game === 'sentence' && posLabel && (
+            <p className="mt-2 font-black uppercase tracking-widest text-purple-500" style={{ fontSize: 11 }}>
+              Guess the {posLabel}
+            </p>
+          )}
           <div className="mt-3 flex items-center gap-3">
             <SoundWave active={isBear} color="#9333EA" />
             {isBear && (
@@ -583,14 +605,14 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
         </div>
 
         {/* Feedback card */}
-        {isFb && showFx && (
+        {isFb && showFx && !reward && (
           <div
             className="w-full rounded-[24px] p-4 card-lift star-pop relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #FEFCE8 0%, #FEF08A 100%)' }}
           >
             <Confetti />
             <p className="font-display text-yellow-800 text-center" style={{ fontSize: 32, fontWeight: 700 }}>
-              {cur.feedbackText}
+              {fbText}
             </p>
             <p className="text-yellow-700 font-black text-center text-sm mt-1">
               You're amazing! 🌟
@@ -599,7 +621,7 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
         )}
 
         {/* STT card — child's response */}
-        {cur.sttCard && (
+        {sttCard && (
           <div
             className="w-full rounded-[24px] p-5 card-lift slide-up relative overflow-hidden"
             style={{
@@ -619,7 +641,7 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
               </span>
             </div>
             <p className="font-display text-green-900 leading-snug" style={{ fontSize: 22, fontWeight: 700 }}>
-              {cur.sttCard}
+              {sttCard}
             </p>
             <div className="mt-3 flex items-center gap-3">
               <SoundWave active={isChild} color="#16A34A" />
@@ -636,12 +658,12 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
         <p className="font-bold text-purple-400" style={{ fontSize: 13 }}>
           {isBear  ? '🔊 Teddy is speaking…'
           : isChild ? 'Tap the mic when you\'re done!'
-          :           isLast ? 'Tap to play again! 🔄' : 'Great! Tap next ▶'}
+          :           reward ? 'Tap to play again! 🔄' : 'Great! Tap next ▶'}
         </p>
-        <MicButton state={cur.state} onTap={advance} />
+        <MicButton state={audioState === 'feedback' || reward ? 'feedback' : audioState} onTap={onMic} />
         {!isChild && (
           <button
-            onClick={advance}
+            onClick={onNext}
             className="mt-1 px-8 py-3 rounded-2xl btn-press font-display text-white shine-btn"
             style={{
               fontSize: 18, fontWeight: 700,
@@ -649,12 +671,450 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
               boxShadow: `0 5px 0 #5B21B6, 0 8px 20px rgba(124,58,237,0.35)`,
             }}
           >
-            {isFb && isLast ? 'Play again! 🎵' : 'Next ▶'}
+            {reward ? 'Play again! 🎵' : 'Next ▶'}
           </button>
         )}
       </div>
+
+      {reward && (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center px-5"
+          style={{ background: 'rgba(76,29,149,0.28)' }}
+          onClick={onNext}
+        >
+          <div
+            className="w-full rounded-[24px] p-6 card-lift star-pop relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #FEFCE8 0%, #FEF08A 100%)' }}
+          >
+            <Confetti />
+            <p className="font-display text-yellow-800 text-center" style={{ fontSize: 32, fontWeight: 700 }}>
+              {fbText}
+            </p>
+            <p className="text-yellow-700 font-black text-center text-sm mt-1">
+              You're amazing! 🌟
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LIVE SESSION (same look; PCM + /ws like the existing tutor)
+───────────────────────────────────────────────────────────── */
+const TARGET_RATE = 16000
+const CHUNK_SAMPLES = Math.floor(TARGET_RATE * 0.25)
+const IDLE_MS = 8000
+
+function downsample(input: Float32Array, inRate: number) {
+  if (inRate === TARGET_RATE) return input
+  const ratio = inRate / TARGET_RATE
+  const outLen = Math.floor(input.length / ratio)
+  const out = new Float32Array(outLen)
+  let pos = 0
+  for (let i = 0; i < outLen; i += 1) {
+    const next = Math.min(input.length - 1, (i + 1) * ratio)
+    let acc = 0
+    let n = 0
+    while (pos < next) {
+      acc += input[pos]
+      pos += 1
+      n += 1
+    }
+    out[i] = n ? acc / n : input[Math.min(input.length - 1, Math.floor(i * ratio))]
+  }
+  return out
+}
+
+function floatTo16(f32: Float32Array) {
+  const out = new Int16Array(f32.length)
+  for (let i = 0; i < f32.length; i += 1) {
+    const s = Math.max(-1, Math.min(1, f32[i]))
+    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff
+  }
+  return out
+}
+
+function wsUrl() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${proto}://${location.host}/ws`
+}
+
+function audioCtor(): typeof AudioContext {
+  return window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+}
+
+function useTeddyLive() {
+  const [audioState, setAudioState] = useState<AudioState>('bear-speaking')
+  const [prompt, setPrompt] = useState('')
+  const [heard, setHeard] = useState<string | null>(null)
+  const [bearLabel, setBearLabel] = useState('Teddy says:')
+  const [bearPrompt, setBearPrompt] = useState('Let’s play!')
+  const [feedbackText, setFeedbackText] = useState<string | null>(null)
+  const [reward, setReward] = useState(false)
+  const [points, setPoints] = useState(12)
+  const [posLabel, setPosLabel] = useState('')
+  const showFb = useRef(false)
+  const wsRef = useRef<WebSocket | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const speakingRef = useRef(false)
+  const sendingRef = useRef(false)
+  const pendingRef = useRef<Float32Array[]>([])
+  const pendingCountRef = useRef(0)
+  const playQueue = useRef(Promise.resolve())
+  const idleTimer = useRef<number | null>(null)
+  const rewardRef = useRef(false)
+  const pendingStart = useRef<'complete' | 'story' | null>(null)
+  const expectWav = useRef(false)
+  const modeRef = useRef<'complete' | 'story'>('complete')
+
+  function disarmIdle() {
+    if (idleTimer.current) {
+      window.clearTimeout(idleTimer.current)
+      idleTimer.current = null
+    }
+  }
+
+  function armIdle() {
+    disarmIdle()
+    idleTimer.current = window.setTimeout(() => {
+      if (!sendingRef.current || speakingRef.current) return
+      const ws = wsRef.current
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'idle' }))
+    }, IDLE_MS)
+  }
+
+  function applyUi(msg: Record<string, unknown>) {
+    const stem = typeof msg.stem === 'string' ? msg.stem : ''
+    const nextPrompt = typeof msg.prompt === 'string' ? msg.prompt : stem ? `${stem} ___` : ''
+    if (nextPrompt) setPrompt(nextPrompt)
+    if (typeof msg.heard === 'string' && msg.heard) setHeard(msg.heard)
+    if (typeof msg.feedback === 'string' && msg.feedback) setFeedbackText(msg.feedback)
+    if (typeof msg.streak === 'number') setPoints(Math.max(12, msg.streak * 5 + (typeof msg.best === 'number' ? msg.best : 0)))
+    if (typeof msg.pos === 'string') setPosLabel(msg.pos)
+    if (msg.correct === true || msg.celebrate === true || msg.reward === true) {
+      showFb.current = true
+      setBearLabel('Wonderful! 🎉')
+      setBearPrompt("You're so smart!")
+    }
+    if (msg.correct === true || msg.celebrate === true || msg.reward === true) {
+      rewardRef.current = true
+      setReward(true)
+      setFeedbackText(typeof msg.feedback === 'string' && msg.feedback ? msg.feedback : 'Great job! ⭐')
+    }
+    if (typeof msg.coach === 'string' && msg.coach && !showFb.current) {
+      setBearPrompt(msg.coach)
+      setBearLabel(msg.mode === 'story' ? 'Story time!' : 'Teddy says:')
+    }
+    if (msg.mode === 'story') {
+      if (!showFb.current) {
+        setBearLabel('Story time!')
+        if (typeof msg.coach !== 'string') setBearPrompt("Today we are going to write a story together! 📖")
+      }
+    } else if (!showFb.current && msg.mode === 'complete') {
+      setBearLabel('Teddy says:')
+      if (typeof msg.coach !== 'string') setBearPrompt('Today we are going to learn how to complete sentences.')
+    }
+  }
+
+  function syncState(server: string) {
+    if (server === 'listening') {
+      sendingRef.current = true
+      armIdle()
+      if (!rewardRef.current) {
+        showFb.current = false
+        setAudioState('child-speaking')
+        setBearLabel("I'm listening… 👂")
+        setBearPrompt(
+          modeRef.current === 'story'
+            ? 'What should we do next?'
+            : posLabel
+              ? `Guess the ${posLabel}!`
+              : 'Finish the sentence with the missing word!'
+        )
+      } else {
+        setAudioState('feedback')
+      }
+      return
+    }
+    sendingRef.current = false
+    disarmIdle()
+    if (server === 'speaking') {
+      setAudioState(showFb.current || rewardRef.current ? 'feedback' : 'bear-speaking')
+      return
+    }
+    if (server === 'thinking') {
+      setAudioState(showFb.current || rewardRef.current ? 'feedback' : 'bear-speaking')
+    }
+  }
+
+  function getAudioCtx() {
+    const Ctor = audioCtor()
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+      audioCtxRef.current = new Ctor()
+    }
+    return audioCtxRef.current
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioCtx()
+    if (ctx.state === 'suspended') await ctx.resume()
+    try {
+      const buf = ctx.createBuffer(1, 1, ctx.sampleRate)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start()
+    } catch {
+      /* unlock best-effort */
+    }
+  }
+
+  function haltVoice() {
+    try {
+      sourceRef.current?.stop()
+    } catch {
+      /* already stopped */
+    }
+    sourceRef.current = null
+    speakingRef.current = false
+    playQueue.current = Promise.resolve()
+  }
+
+  async function playWav(bytes: ArrayBuffer) {
+    speakingRef.current = true
+    sendingRef.current = false
+    syncState('speaking')
+    try {
+      const ctx = getAudioCtx()
+      if (ctx.state === 'suspended') await ctx.resume()
+      const gain = ctx.createGain()
+      gain.gain.value = 1
+      gain.connect(ctx.destination)
+      const copy = bytes.slice(0)
+      const buffer = await ctx.decodeAudioData(copy)
+      await new Promise<void>((resolve, reject) => {
+        const src = ctx.createBufferSource()
+        sourceRef.current = src
+        src.buffer = buffer
+        src.connect(gain)
+        src.onended = () => resolve()
+        src.addEventListener('error', () => reject(new Error('tts')))
+        src.start()
+      })
+    } finally {
+      sourceRef.current = null
+      speakingRef.current = false
+      const ws = wsRef.current
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ready' }))
+    }
+  }
+
+  function enqueueAudio(bytes: ArrayBuffer) {
+    playQueue.current = playQueue.current.then(() => playWav(bytes)).catch(() => {
+      speakingRef.current = false
+    })
+  }
+
+  function flush() {
+    if (!pendingCountRef.current) return
+    const merged = new Float32Array(pendingCountRef.current)
+    let off = 0
+    pendingRef.current.forEach((chunk) => {
+      merged.set(chunk, off)
+      off += chunk.length
+    })
+    pendingRef.current = []
+    pendingCountRef.current = 0
+    const ws = wsRef.current
+    if (!ws || ws.readyState !== 1 || speakingRef.current || !sendingRef.current) return
+    const i16 = floatTo16(merged)
+    ws.send(i16.buffer.slice(i16.byteOffset, i16.byteOffset + i16.byteLength))
+  }
+
+  async function ensureMic() {
+    await unlockAudio()
+    const ctx = getAudioCtx()
+    if (ctx.state === 'suspended') await ctx.resume()
+    if (streamRef.current && processorRef.current) return
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+      video: false,
+    })
+    streamRef.current = stream
+    if (ctx.state === 'suspended') await ctx.resume()
+    const source = ctx.createMediaStreamSource(stream)
+    const processor = ctx.createScriptProcessor(4096, 1, 1)
+    processorRef.current = processor
+    processor.onaudioprocess = (ev) => {
+      if (speakingRef.current || !sendingRef.current) return
+      const input = ev.inputBuffer.getChannelData(0)
+      const resampled = downsample(input, ctx.sampleRate)
+      pendingRef.current.push(new Float32Array(resampled))
+      pendingCountRef.current += resampled.length
+      if (pendingCountRef.current >= CHUNK_SAMPLES) flush()
+    }
+    const mute = ctx.createGain()
+    mute.gain.value = 0
+    source.connect(processor)
+    processor.connect(mute)
+    mute.connect(ctx.destination)
+  }
+
+  useEffect(() => {
+    let closed = false
+    function connect() {
+      if (closed) return
+      const ws = new WebSocket(wsUrl())
+      ws.binaryType = 'arraybuffer'
+      wsRef.current = ws
+      ws.onmessage = (ev) => {
+        const payload = ev.data
+        if (payload instanceof ArrayBuffer) {
+          if (expectWav.current || payload.byteLength > 64) {
+            expectWav.current = false
+            enqueueAudio(payload)
+          }
+          return
+        }
+        if (payload instanceof Blob) {
+          payload.arrayBuffer().then((buf) => {
+            expectWav.current = false
+            enqueueAudio(buf)
+          })
+          return
+        }
+        try {
+          const msg = JSON.parse(String(payload)) as Record<string, unknown>
+          if (msg.type === 'hello') {
+            return
+          }
+          if (msg.type === 'audio') {
+            const b64 = typeof msg.b64 === 'string' ? msg.b64 : ''
+            if (b64) {
+              const raw = atob(b64)
+              const bytes = new Uint8Array(raw.length)
+              for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i)
+              enqueueAudio(bytes.buffer)
+            } else {
+              expectWav.current = true
+            }
+            return
+          }
+          if (msg.type === 'state') {
+            applyUi(msg)
+            syncState(String(msg.state || ''))
+          }
+          if (msg.type === 'ui' || msg.type === 'speak_text') applyUi(msg)
+          if (msg.type === 'transcript' && typeof msg.text === 'string') setHeard(msg.text)
+        } catch {
+          /* ignore malformed frames */
+        }
+      }
+      ws.onopen = () => {
+        const queued = pendingStart.current
+        if (queued && ws.readyState === 1) {
+          pendingStart.current = null
+          ws.send(JSON.stringify({ type: 'start', mode: queued, name: '', voice: 'af_bella' }))
+        }
+      }
+      ws.onclose = () => {
+        if (!closed) window.setTimeout(connect, 1200)
+      }
+    }
+    connect()
+    return () => {
+      closed = true
+      disarmIdle()
+      haltVoice()
+      wsRef.current?.close()
+    }
+  }, [])
+
+  async function begin(mode: 'complete' | 'story') {
+    haltVoice()
+    rewardRef.current = false
+    showFb.current = false
+    setReward(false)
+    setHeard(null)
+    setFeedbackText(null)
+    setAudioState('bear-speaking')
+    if (mode === 'story') {
+      modeRef.current = 'story'
+      setBearLabel('Story time!')
+      setBearPrompt('Today we are going to write a story together! 📖')
+      setPrompt('A tiny fox finds a picnic basket… What should the fox do?')
+      setPosLabel('')
+    } else {
+      modeRef.current = 'complete'
+      setBearLabel('Teddy says:')
+      setBearPrompt('Today we are going to learn how to complete sentences.')
+      setPrompt('The ___ kitten sat on the rug.')
+      setPosLabel('adjective')
+    }
+    try {
+      await unlockAudio()
+      await ensureMic()
+    } catch {
+      /* keep going so Teddy can still talk; tap mic to retry */
+    }
+    const payload = JSON.stringify({ type: 'start', mode, name: '', voice: 'af_bella' })
+    const ws = wsRef.current
+    if (ws && ws.readyState === 1) {
+      pendingStart.current = null
+      ws.send(payload)
+      return
+    }
+    pendingStart.current = mode
+  }
+
+  function stop() {
+    haltVoice()
+    sendingRef.current = false
+    disarmIdle()
+    rewardRef.current = false
+    showFb.current = false
+    setReward(false)
+    const ws = wsRef.current
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'stop' }))
+  }
+
+  function onMic() {
+    void ensureMic()
+    const ws = wsRef.current
+    if (rewardRef.current) {
+      rewardRef.current = false
+      setReward(false)
+      showFb.current = false
+      setAudioState('child-speaking')
+      sendingRef.current = true
+      return
+    }
+    sendingRef.current = true
+    setAudioState('child-speaking')
+    if (ws && ws.readyState === 1 && speakingRef.current) {
+      haltVoice()
+      ws.send(JSON.stringify({ type: 'ready' }))
+    }
+  }
+
+  function onNext() {
+    if (rewardRef.current) {
+      rewardRef.current = false
+      setReward(false)
+      showFb.current = false
+      setAudioState('child-speaking')
+      return
+    }
+    const ws = wsRef.current
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'repeat' }))
+  }
+
+  return { audioState, prompt, heard, bearLabel, bearPrompt, feedbackText, reward, points, posLabel, begin, stop, onMic, onNext }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -662,6 +1122,7 @@ function AudioGameScreen({ game, onBack }: { game: 'sentence' | 'story'; onBack:
 ───────────────────────────────────────────────────────────── */
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
+  const live = useTeddyLive()
 
   return (
     <div
@@ -721,9 +1182,33 @@ export default function App() {
 
           {/* Content area */}
           <div style={{ position: 'absolute', top: 46, left: 0, right: 0, bottom: 0 }}>
-            {screen === 'home' && <HomeScreen onSelect={g => setScreen(g)} />}
+            {screen === 'home' && (
+              <HomeScreen
+                points={live.points}
+                onSelect={g => {
+                  setScreen(g)
+                  live.begin(g === 'story' ? 'story' : 'complete')
+                }}
+              />
+            )}
             {(screen === 'sentence' || screen === 'story') && (
-              <AudioGameScreen game={screen} onBack={() => setScreen('home')} />
+              <AudioGameScreen
+                game={screen}
+                onBack={() => {
+                  live.stop()
+                  setScreen('home')
+                }}
+                audioState={live.audioState}
+                prompt={live.prompt}
+                heard={live.heard}
+                bearLabel={live.bearLabel}
+                bearPrompt={live.bearPrompt}
+                feedbackText={live.feedbackText}
+                posLabel={live.posLabel}
+                reward={live.reward}
+                onMic={live.onMic}
+                onNext={live.onNext}
+              />
             )}
           </div>
         </div>

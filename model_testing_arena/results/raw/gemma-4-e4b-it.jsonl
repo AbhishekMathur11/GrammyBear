@@ -1,0 +1,1 @@
+{"model": "gemma-4-e4b-it", "example_id": null, "status": "failed_to_load", "load_error": "RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}", "attempted_examples": 486}

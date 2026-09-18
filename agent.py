@@ -1,4 +1,4 @@
-"""Language tutor brain: two kid modes, in-memory audio, injectable engines."""
+"""Language tutor brain: sentence-finish plus story-build (mistake mode kept unused)."""
 
 from __future__ import annotations
 
@@ -26,56 +26,92 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 COMPLETION_ITEMS = [
     {
         "id": "puppy",
-        "stem": "The hungry puppy ran toward",
+        "stem": "The hungry puppy ran toward ___.",
+        "blank": "The hungry puppy ran toward ___.",
+        "pos": "noun",
         "expected": "the food bowl",
+        "aliases": ["bowl", "food", "dish", "plate"],
+        "tense": "past",
         "full": "The hungry puppy ran toward the food bowl.",
     },
     {
         "id": "moon",
-        "stem": "At night we can see the bright",
+        "stem": "At night we can see the bright ___.",
+        "blank": "At night we can see the bright ___.",
+        "pos": "noun",
         "expected": "moon",
+        "aliases": ["stars", "sky"],
+        "tense": "present",
         "full": "At night we can see the bright moon.",
     },
     {
         "id": "park",
-        "stem": "After school we like to play at the",
+        "stem": "After school we like to play at the ___.",
+        "blank": "After school we like to play at the ___.",
+        "pos": "noun",
         "expected": "park",
+        "aliases": ["playground", "yard"],
+        "tense": "present",
         "full": "After school we like to play at the park.",
     },
     {
         "id": "story",
-        "stem": "Grandma opened the book and began to",
+        "stem": "Grandma opened the book and began to ___.",
+        "blank": "Grandma opened the book and began to ___.",
+        "pos": "verb",
         "expected": "read a story",
+        "aliases": ["read", "read a book"],
+        "tense": "past",
         "full": "Grandma opened the book and began to read a story.",
     },
     {
         "id": "rain",
-        "stem": "We jumped in puddles because it was",
+        "stem": "We jumped in puddles because it was ___.",
+        "blank": "We jumped in puddles because it was ___.",
+        "pos": "verb",
         "expected": "raining",
+        "aliases": ["rainy", "wet"],
+        "tense": "past",
         "full": "We jumped in puddles because it was raining.",
     },
     {
         "id": "kite",
-        "stem": "The red kite flew over",
+        "stem": "The red kite flew over ___.",
+        "blank": "The red kite flew over ___.",
+        "pos": "noun",
         "expected": "the hill",
+        "aliases": ["hill", "the park", "trees"],
+        "tense": "past",
         "full": "The red kite flew over the hill.",
     },
     {
         "id": "soup",
-        "stem": "Mom stirred a pot of hot",
+        "stem": "Mom stirred a pot of hot ___.",
+        "blank": "Mom stirred a pot of hot ___.",
+        "pos": "noun",
         "expected": "soup",
+        "aliases": ["stew", "broth"],
+        "tense": "past",
         "full": "Mom stirred a pot of hot soup.",
     },
     {
         "id": "bus",
-        "stem": "We waited on the corner for the",
+        "stem": "We waited on the corner for the ___.",
+        "blank": "We waited on the corner for the ___.",
+        "pos": "noun",
         "expected": "school bus",
+        "aliases": ["bus", "the bus"],
+        "tense": "past",
         "full": "We waited on the corner for the school bus.",
     },
     {
         "id": "stars",
-        "stem": "At bedtime I like to count the",
+        "stem": "At bedtime I like to count the ___.",
+        "blank": "At bedtime I like to count the ___.",
+        "pos": "noun",
         "expected": "stars",
+        "aliases": ["star", "clouds"],
+        "tense": "present",
         "full": "At bedtime I like to count the stars.",
     },
 ]
@@ -262,6 +298,38 @@ COMPLETE_FRAMES = (
     ("The little boat floated on the", "lake"),
 )
 
+GRAMMAR_FRAMES = (
+    {"blank": "The ___ kitten sat on the rug.", "expected": "fluffy", "pos": "adjective", "tense": "past", "aliases": ["soft", "tiny", "happy"]},
+    {"blank": "The hungry puppy ran toward the ___.", "expected": "bowl", "pos": "noun", "tense": "past", "aliases": ["dish", "food"]},
+    {"blank": "Birds ___ in the morning.", "expected": "sing", "pos": "verb", "tense": "present", "aliases": ["chirp", "tweet"]},
+    {"blank": "She walked ___ the little bridge.", "expected": "across", "pos": "preposition", "tense": "past", "aliases": ["over", "on"]},
+    {"blank": "The turtle moved ___.", "expected": "slowly", "pos": "adverb", "tense": "past", "aliases": ["gently", "quietly"]},
+    {"blank": "Dad baked a ___ on Sunday.", "expected": "cake", "pos": "noun", "tense": "past", "aliases": ["pie", "loaf"]},
+    {"blank": "The ___ duck splashed in the puddle.", "expected": "silly", "pos": "adjective", "tense": "past", "aliases": ["happy", "tiny"]},
+    {"blank": "We ___ our hands before lunch.", "expected": "wash", "pos": "verb", "tense": "present", "aliases": ["wash", "soap"]},
+    {"blank": "The kite flew ___ the trees.", "expected": "over", "pos": "preposition", "tense": "past", "aliases": ["above", "across"]},
+    {"blank": "Please speak ___.", "expected": "kindly", "pos": "adverb", "tense": "present", "aliases": ["softly", "nicely"]},
+)
+
+STORY_BEATS = (
+    {"situation": "A tiny fox finds a closed picnic basket in a sunny meadow.", "question": "What should the fox do first?"},
+    {"situation": "Two ducklings reach a sparkling puddle after the rain.", "question": "What should they do next?"},
+    {"situation": "A kind owl holds a glowing lantern on a garden path.", "question": "Where should they go?"},
+)
+
+STORY_OPENERS = (
+    ("Once upon a time a little bear found a magical", "lantern"),
+    ("On a sunny morning a kind fox packed a picnic of", "berries"),
+    ("A tiny duckling waddled toward the sparkling", "pond"),
+)
+
+STORY_CONTINUES = (
+    ("Then they followed a winding path to the", "garden"),
+    ("A friendly owl showed them a shiny", "key"),
+    ("Together they crossed a wooden bridge over the", "creek"),
+    ("At last they shared the treasure with their", "friends"),
+)
+
 MISTAKE_FRAMES = (
     ("{kid} don't like {food}.", "{kid} doesn't like {food}.", "grammar", "Names and he or she use doesn't."),
     ("{kid} goed to the {place}.", "{kid} went to the {place}.", "grammar", "The past tense of go is went."),
@@ -372,6 +440,31 @@ class TutorEvent:
     audio: Optional[bytes] = None
 
 
+STREAK_REWARD = 5
+STORY_CHAPTER_LEN = 6
+POS_TYPES = ("noun", "verb", "adjective", "adverb", "preposition")
+
+UNSAFE_RE = re.compile(
+    r"\b("
+    r"damn|dammit|hell|crap|crappy|stupid|idiot|dumb|sucks|shut\s*up|hate|"
+    r"kill|die|dead|murder|blood|gun|shoot|weapon|sex|sexy|porn|nude|"
+    r"weed|beer|wine|drunk|drug|cocaine|cigarette|smoke|"
+    r"f+u+c+k+|s+h+i+t+|a+s+s+h+o+l+e+|b+i+t+c+h+|wtf|omfg"
+    r")\b",
+    re.I,
+)
+
+
+def is_kid_unsafe(text: str) -> bool:
+    return bool(UNSAFE_RE.search(text or ""))
+
+
+def kid_safe_line(text: str) -> str:
+    cleaned = UNSAFE_RE.sub("oh", text or "")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
 @dataclass
 class SessionState:
     mode: str = "complete"
@@ -381,6 +474,8 @@ class SessionState:
     turns: int = 0
     best: int = 0
     misses: int = 0
+    story_sentences: list[str] = field(default_factory=list)
+    chapter: int = 1
 
 
 class LanguageModel:
@@ -401,16 +496,26 @@ class LanguageModel:
 
         if self._client is None:
             self._client = OpenAI(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout)
-        resp = self._client.chat.completions.create(
-            model=self.model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            messages=[
+        system = (
+            system
+            + "\nNever use slang, swearing, violence, adult themes, or scary images. "
+            "Speak in warm, simple English for ages 5-8."
+        )
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-        )
-        return (resp.choices[0].message.content or "").strip()
+        }
+        if "qwen3" in (self.model or "").lower():
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+        resp = self._client.chat.completions.create(**kwargs)
+        text = (resp.choices[0].message.content or "").strip()
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.I | re.S).strip()
+        return kid_safe_line(text)
 
 
 class SpeechToText:
@@ -512,7 +617,8 @@ def pcm_to_wav_bytes(samples: np.ndarray, sample_rate: int) -> bytes:
     audio = np.asarray(samples, dtype=np.float32)
     if audio.ndim > 1:
         audio = np.mean(audio, axis=1)
-    sf.write(buf, audio, sample_rate, format="WAV")
+    audio = np.clip(audio, -1.0, 1.0)
+    sf.write(buf, audio, sample_rate, format="WAV", subtype="PCM_16")
     return buf.getvalue()
 
 
@@ -603,12 +709,21 @@ class ChunkAssembler:
         return None
 
 
+INVENT_THEMES = (
+    "breakfast", "rainy puddles", "the zoo", "grandma's kitchen", "bedtime", "the playground",
+    "a birthday", "the farm", "the beach pail", "the school bus", "a cozy library", "helping mom",
+)
+
 SYSTEM_INVENT_COMPLETE = textwrap.dedent("""\
-    Invent one brand-new sentence-completion prompt for kids ages 5-8.
-    Kid-safe everyday English. Never copy a banned stem.
-    Stem is 6-12 words that stop mid-thought. expected is one SAMPLE noun ending, not the only answer.
-    Do not end the stem on a lonely adjective.
-    JSON only: {"stem":"...","expected":"...","full":"..."}
+    You are Teddy teaching grammar to kids ages 5-8 in Finish the Sentence.
+    Pick ONE part of speech: noun, verb, adjective, adverb, or preposition.
+    Write one short kid-safe sentence and replace THAT one word with ___.
+    The missing word must be the only good fit for tense and usage
+    (plus a few close synonyms). Not a trailing blank at the end unless the POS is a noun.
+    Vary topic every time. Never copy banned stems.
+    expected: the exact missing word or short phrase (1-3 words).
+    aliases: 1-3 close synonyms that keep the same POS and tense.
+    JSON only: {"blank":"The ___ kitten sat on the rug.","pos":"adjective","expected":"fluffy","aliases":["soft"],"tense":"past","full":"The fluffy kitten sat on the rug."}
 """)
 
 SYSTEM_INVENT_MISTAKE = textwrap.dedent("""\
@@ -618,18 +733,37 @@ SYSTEM_INVENT_MISTAKE = textwrap.dedent("""\
     JSON only: {"spoken":"...","correct":"...","kind":"grammar|pronunciation","hint":"..."}
 """)
 
+SYSTEM_INVENT_STORY = textwrap.dedent("""\
+    You are Teddy playing Story Adventure with a child ages 5-8.
+    This is pretend play, NOT a grammar fill-in-the-blank.
+    If story_so_far is empty, invent a brand-new cozy situation (one or two short sentences)
+    and one creative choice question (What should we do? What should we use? Where do we go?).
+    If story_so_far has lines, CONTINUE that exact story. Add a new beat, then ask a NEW choice.
+    Keep it short, surprising, kind, and kid-safe. No slang, fear, violence, or adult themes.
+    JSON only: {"situation":"...","question":"What should we do next?"}
+""")
+
 SYSTEM_JUDGE_COMPLETE = textwrap.dedent("""\
-    You are a kind tutor for kids ages 5-8. They are finishing a sentence.
-    sample_ending is only ONE possible answer. Accept any child_said that:
-    makes a real, kid-safe English sentence with the stem.
-    Reject nonsense, empty guesses, or words that do not finish the thought.
+    You are Teddy judging a grammar blank for ages 5-8.
+    The child must supply the missing POS (noun, verb, adjective, adverb, or preposition)
+    that fits the tense and the sentence.
+    expected is the target word. aliases are also correct.
+    Accept close grammar-true synonyms of the SAME part of speech and tense.
+    Reject a different POS, a wrong tense, slang, or a word that breaks the sentence.
     JSON only: {"correct": true/false}
 """)
 
 SYSTEM_JUDGE_MISTAKE = textwrap.dedent("""\
     You are a kind tutor for kids ages 5-8. They must fix one error in a sentence.
     sample_fix is one good correction. Accept paraphrases that fix the SAME error.
-    Reject repeating the error or a totally different sentence.
+    Reject repeating the error, slang, or a totally different sentence.
+    JSON only: {"correct": true/false}
+""")
+
+SYSTEM_JUDGE_STORY = textwrap.dedent("""\
+    You are Teddy playing Story Adventure. The child is choosing what happens next.
+    Accept almost any kid-safe idea (open the basket, share the snack, go left, use the lantern).
+    Reject only empty, nonsense, slang, scary, mean, or adult ideas.
     JSON only: {"correct": true/false}
 """)
 
@@ -668,6 +802,13 @@ class LanguageTutor:
         self.voice_id = "af_bella"
         self.introduced = False
         self.explained_modes: set[str] = set()
+        self._reward_pending = False
+
+    def _is_story(self) -> bool:
+        return self.state.mode == "story"
+
+    def _is_complete_like(self) -> bool:
+        return self.state.mode == "complete"
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "LanguageTutor":
@@ -680,12 +821,12 @@ class LanguageTutor:
             model_dir = Path(__file__).resolve().parent / model_dir
         llm = LanguageModel(
             base_url=llm_cfg.get("base_url", "http://127.0.0.1:8000/v1"),
-            model=llm_cfg.get("model", "Qwen/Qwen2.5-7B-Instruct-AWQ"),
+            model=llm_cfg.get("model", "Qwen/Qwen2.5-14B-Instruct-AWQ"),
             api_key=llm_cfg.get("api_key", "local"),
-            timeout=float(llm_cfg.get("timeout", 4.0)),
+            timeout=float(llm_cfg.get("timeout", 12.0)),
         )
         stt = SpeechToText(
-            model_size=stt_cfg.get("model", "tiny.en"),
+            model_size=stt_cfg.get("model", "base.en"),
             device=stt_cfg.get("device", "cpu"),
             compute_type=stt_cfg.get("compute_type", "int8"),
         )
@@ -708,7 +849,9 @@ class LanguageTutor:
         return self.item
 
     def _bank(self) -> list[dict[str, Any]]:
-        return COMPLETION_ITEMS if self.state.mode == "complete" else MISTAKE_ITEMS
+        if self.state.mode == "mistake":
+            return MISTAKE_ITEMS
+        return COMPLETION_ITEMS
 
     def _item_keys(self, item: Optional[dict[str, Any]]) -> set[str]:
         if not item:
@@ -731,18 +874,19 @@ class LanguageTutor:
     def _valid_item(self, item: Any) -> bool:
         if not isinstance(item, dict):
             return False
-        if self.state.mode == "complete":
-            stem = self._clean_phrase(item.get("stem", ""))
+        if self._is_story():
+            situation = self._clean_phrase(item.get("situation") or item.get("stem") or "")
+            question = str(item.get("question") or "").strip()
+            return bool(situation) and ("?" in question or len(question.split()) >= 3)
+        if self._is_complete_like():
+            blank = str(item.get("blank") or item.get("stem") or "")
             expected = self._clean_phrase(item.get("expected", "")).lower()
-            if not stem or not expected:
+            pos = str(item.get("pos") or "noun").lower()
+            if pos not in POS_TYPES or not expected:
                 return False
-            if expected in normalize_text(stem):
+            if expected in normalize_text(blank.replace("___", " ")):
                 return False
-            if len(stem.split()) < 4 or len(expected.split()) > 4:
-                return False
-            last = stem.split()[-1].lower()
-            adj = set(GEN_ADJECTIVES) | {"furry", "fuzzy", "red", "blue", "hot", "cold", "big", "little"}
-            if expected in adj or last in adj:
+            if len(expected.split()) > 4:
                 return False
             return True
         spoken = self._clean_phrase(item.get("spoken", ""))
@@ -767,11 +911,43 @@ class LanguageTutor:
             nested.setdefault("kind", data.get("kind"))
             nested.setdefault("hint", data.get("hint"))
             data = nested
-        if self.state.mode == "complete":
-            stem = self._clean_phrase(data.get("stem", "")).rstrip(".")
+        if self._is_story():
+            situation = self._clean_phrase(data.get("situation") or data.get("stem") or "")
+            question = str(data.get("question") or "What should we do next?").strip()
+            if not question.endswith("?"):
+                question = question.rstrip(".") + "?"
+            return {
+                "id": data.get("id") or situation.lower()[:40],
+                "situation": situation,
+                "question": question,
+                "stem": situation,
+                "expected": self._clean_phrase(data.get("expected") or "help"),
+                "full": kid_safe_line(f"{situation} {question}"),
+            }
+        if self._is_complete_like():
+            pos = str(data.get("pos") or "noun").lower()
+            if pos not in POS_TYPES:
+                pos = "noun"
+            blank = str(data.get("blank") or data.get("stem") or "").strip()
+            blank = blank.replace("…", "___").replace("...", "___")
+            if "___" not in blank:
+                blank = f"{self._clean_phrase(blank).rstrip('.')} ___."
             expected = self._clean_phrase(data.get("expected", "")).lower()
-            full = self._clean_phrase(data.get("full") or f"{stem} {expected}")
-            item = {"id": data.get("id") or stem.lower(), "stem": stem, "expected": expected, "full": f"{full.rstrip('.')}."}
+            aliases = data.get("aliases") or []
+            if isinstance(aliases, str):
+                aliases = [aliases]
+            aliases = [self._clean_phrase(a).lower() for a in aliases if self._clean_phrase(a)]
+            full = self._clean_phrase(data.get("full") or blank.replace("___", expected))
+            return {
+                "id": data.get("id") or blank.lower(),
+                "stem": blank,
+                "blank": blank,
+                "pos": pos,
+                "expected": expected,
+                "aliases": aliases,
+                "tense": str(data.get("tense") or "present").lower(),
+                "full": f"{full.rstrip('.')}.",
+            }
         else:
             spoken = self._clean_phrase(data.get("spoken", ""))
             correct = self._clean_phrase(data.get("correct", ""))
@@ -798,7 +974,7 @@ class LanguageTutor:
 
     def _commit_item(self, item: dict[str, Any]) -> dict[str, Any]:
         item = self._normalize_item(item)
-        if self.state.mode == "complete":
+        if self._is_complete_like():
             item.setdefault("full", f"{item['stem']} {item['expected']}.")
         self.item = item
         self._remember(item)
@@ -822,9 +998,12 @@ class LanguageTutor:
     def _procedural_item(self) -> dict[str, Any]:
         for _ in range(30):
             slots = self._slot_values()
-            if self.state.mode == "complete":
-                stem_t, expected_t = random.choice(COMPLETE_FRAMES)
-                item = {"stem": self._fill_slots(stem_t, slots), "expected": self._fill_slots(expected_t, slots)}
+            if self._is_story():
+                beat = random.choice(STORY_BEATS)
+                item = {"situation": beat["situation"], "question": beat["question"]}
+            elif self._is_complete_like():
+                frame = random.choice(GRAMMAR_FRAMES)
+                item = dict(frame)
             else:
                 spoken_t, correct_t, kind, hint = random.choice(MISTAKE_FRAMES)
                 item = {
@@ -844,13 +1023,27 @@ class LanguageTutor:
         if self.llm is None:
             return None
         banned = ", ".join(list(self._banned_keys())[:18]) or "none"
-        if self.state.mode == "complete":
+        theme = random.choice(INVENT_THEMES)
+        if self._is_story():
+            system = SYSTEM_INVENT_STORY
+            so_far = " ".join(self.state.story_sentences) or "(none yet — open a brand-new situation)"
+            user = (
+                f"Fresh flavor this turn: {theme}.\n"
+                f"story_so_far: {so_far}\nBanned: {banned}\n"
+                f"Invent the next situation and a creative choice question."
+            )
+        elif self._is_complete_like():
+            pos = random.choice(POS_TYPES)
             system = SYSTEM_INVENT_COMPLETE
-            user = f"Banned stems/answers: {banned}. Invent one new completion."
+            user = (
+                f"Use part of speech: {pos}. Theme: {theme}.\n"
+                f"Banned: {banned}.\n"
+                f"Invent one unique grammar blank. expected plus aliases must be deterministic."
+            )
         else:
             system = SYSTEM_INVENT_MISTAKE
             user = f"Banned sentences: {banned}. Invent one new mistake sentence."
-        raw = self.llm.complete(system, user, max_tokens=180, temperature=0.9)
+        raw = self.llm.complete(system, user, max_tokens=220, temperature=1.0)
         parsed = parse_llm_json(raw)
         item = self._normalize_item(parsed)
         if self._valid_item(item) and not self._too_similar(item):
@@ -878,11 +1071,16 @@ class LanguageTutor:
         self.invent_item()
 
     def set_mode(self, mode: str) -> None:
-        self.state = SessionState(mode="mistake" if mode == "mistake" else "complete")
+        aliases = {"sentence": "complete", "finish": "complete"}
+        mode = aliases.get((mode or "").strip(), (mode or "complete").strip())
+        if mode not in {"complete", "mistake", "story"}:
+            mode = "complete"
+        self.state = SessionState(mode=mode)
         self.assembler.reset()
         self.webm_buf.clear()
         self.busy = False
         self.accepting = False
+        self._reward_pending = False
 
     def voice_name(self) -> str:
         for item in VOICE_CHOICES:
@@ -902,17 +1100,29 @@ class LanguageTutor:
                 f"Listen for the wrong word, then say the whole sentence the right way. "
                 f"Ready? Here is the sentence."
             )
+        if self._is_story():
+            return (
+                f"Okay, {self.child_name}, today we write a story together. "
+                f"This is Story Adventure. I start a little scene, then ask what we should do. "
+                f"You choose. After a few choices, I will tell the whole story."
+            )
         return (
-            f"Now we are playing Finish the Sentence, {self.child_name}. "
-            f"I will say most of a sentence and stop. "
-            f"You say words that finish it. There can be more than one good answer. "
-            f"Ready? Here is the sentence."
+            f"Okay, {self.child_name}, today we practice grammar. "
+            f"This is Finish the Sentence. I will say a sentence with one missing word. "
+            f"You guess that word. It might be a noun, verb, adjective, adverb, or preposition."
         )
 
     def prompt_speech(self) -> str:
         item = self.current_item()
-        if self.state.mode == "complete":
-            return str(item.get("stem") or "").rstrip(".")
+        if self._is_story():
+            sit = str(item.get("situation") or item.get("stem") or "")
+            q = str(item.get("question") or "What should we do next?")
+            return kid_safe_line(f"{sit} {q}")
+        if self._is_complete_like():
+            blank = str(item.get("blank") or item.get("stem") or "")
+            spoken = blank.replace("___", "blank")
+            pos = str(item.get("pos") or "noun")
+            return f"Guess the {pos}. {spoken}"
         return str(item.get("spoken") or "")
 
     def _fresh_line(self, choices: tuple[str, ...]) -> str:
@@ -946,9 +1156,30 @@ class LanguageTutor:
             "child_name": self.child_name,
             "voice": self.voice_id,
             "item_id": item.get("id"),
+            "reward": bool(extra.get("reward")) if extra else False,
+            "story": list(self.state.story_sentences),
+            "chapter": self.state.chapter,
+            "story_len": len(self.state.story_sentences),
+            "coach": (
+                str(item.get("question") or "What should we do next?")
+                if self._is_story()
+                else f"Guess the {item.get('pos') or 'word'}!"
+            ),
+            "pos": item.get("pos") or "",
+            "blank": item.get("blank") or item.get("stem") or "",
+            "tense": item.get("tense") or "",
+            "celebrate": bool(extra.get("celebrate")) if extra else False,
         }
-        if self.state.mode == "complete":
-            data.update({"stem": item.get("stem", ""), "prompt": f"{item.get('stem', '')} …"})
+        if self._is_story():
+            data.update(
+                {
+                    "stem": item.get("situation", ""),
+                    "prompt": f"{item.get('situation', '')} {item.get('question', '')}".strip(),
+                }
+            )
+        elif self._is_complete_like():
+            blank = item.get("blank") or item.get("stem") or ""
+            data.update({"stem": blank, "prompt": blank})
         else:
             data.update(
                 {
@@ -976,7 +1207,7 @@ class LanguageTutor:
     def _set_speech(self, blocks: list[str] | str) -> list[str]:
         if isinstance(blocks, str):
             blocks = [blocks]
-        self._pending_blocks = [block.strip() for block in blocks if str(block).strip()]
+        self._pending_blocks = [kid_safe_line(block.strip()) for block in blocks if str(block).strip()]
         self._pending_line = " ".join(self._pending_blocks)
         return self._pending_blocks
 
@@ -1028,9 +1259,10 @@ class LanguageTutor:
                     continue
                 pieces.append(np.asarray(samples, dtype=np.float32))
                 if index < len(blocks) - 1:
-                    gap = 1.05 if index == len(blocks) - 2 else 0.55
+                    gap = 0.28
                     pieces.append(np.zeros(int(int(sample_rate) * gap), dtype=np.float32))
-        except Exception:
+        except Exception as exc:
+            print(f"TTS failed: {exc}", flush=True)
             return None
         if not pieces:
             return None
@@ -1051,11 +1283,22 @@ class LanguageTutor:
             return None
         item = self.current_item()
         try:
-            if self.state.mode == "complete":
+            if self._is_story():
+                system = SYSTEM_JUDGE_STORY
+                payload = {
+                    "situation": item.get("situation", ""),
+                    "question": item.get("question", ""),
+                    "story_so_far": self.state.story_sentences,
+                    "child_said": transcript,
+                }
+            elif self._is_complete_like():
                 system = SYSTEM_JUDGE_COMPLETE
                 payload = {
-                    "stem": item.get("stem", ""),
-                    "sample_ending": item.get("expected", ""),
+                    "blank": item.get("blank") or item.get("stem", ""),
+                    "pos": item.get("pos", "noun"),
+                    "tense": item.get("tense", "present"),
+                    "expected": item.get("expected", ""),
+                    "aliases": item.get("aliases") or [],
                     "child_said": transcript,
                 }
             else:
@@ -1077,24 +1320,34 @@ class LanguageTutor:
     def evaluate_completion(self, transcript: str) -> dict[str, Any]:
         item = self.current_item()
         expected = item.get("expected", "")
-        full = item.get("full") or f"{item.get('stem', '')} {expected}"
+        aliases = [expected] + list(item.get("aliases") or [])
         judged = self._llm_judge(transcript)
-        if judged is not None:
+        unsafe = is_kid_unsafe(transcript)
+        hit = any(contains_expected(transcript, alias) for alias in aliases if alias)
+        if unsafe:
+            ok = False
+        elif hit:
+            ok = True
+        elif judged is not None:
             ok = bool(judged["correct"])
         else:
-            ok = contains_expected(transcript, expected) or contains_expected(transcript, full)
-        word_score = similarity(transcript, expected)
-        phone = phoneme_score(transcript, expected)
+            ok = False
+        word_score = max(similarity(transcript, alias) for alias in aliases if alias) if aliases else 0.0
+        phone = max(phoneme_score(transcript, alias) for alias in aliases if alias) if aliases else 0.0
         heard = self._heard_answer(transcript)
-        if ok:
+        pos = item.get("pos") or "word"
+        if unsafe:
+            speak = f"Let's use kind playground words, {self.child_name}. Try a gentle answer."
+            feedback = "Kind words only, please."
+        elif ok:
             speak = f"Great job, {self.child_name}! It is indeed {heard}."
-            feedback = f"Yes, {self.child_name} — that works."
+            feedback = f"Yes — that {pos} fits!"
         elif phone >= 0.82:
-            speak = f"So close, {self.child_name}. Try that last word one more time."
-            feedback = "Almost — polish the ending."
+            speak = f"So close, {self.child_name}. Try that {pos} one more time."
+            feedback = f"Almost — listen for the {pos}."
         else:
-            speak = f"Nice try, {self.child_name}. Have another go."
-            feedback = "Not quite yet."
+            speak = f"Nice try, {self.child_name}. We need a {pos} that fits."
+            feedback = f"Guess the {pos}."
         result = {
             "correct": ok,
             "speak": speak,
@@ -1106,13 +1359,44 @@ class LanguageTutor:
             result["next"] = judged["next"]
         return result
 
+    def evaluate_story(self, transcript: str) -> dict[str, Any]:
+        judged = self._llm_judge(transcript)
+        unsafe = is_kid_unsafe(transcript)
+        tokens = tokenize(transcript)
+        if unsafe:
+            ok = False
+        elif judged is not None:
+            ok = bool(judged["correct"])
+        else:
+            ok = len(tokens) >= 1
+        heard = self._heard_answer(transcript)
+        if unsafe:
+            speak = f"Let's keep our story kind, {self.child_name}."
+            feedback = "Kind words only, please."
+        elif ok:
+            speak = f"Ooh, {heard}! I like that idea, {self.child_name}."
+            feedback = "What a choice!"
+        else:
+            speak = f"Tell me a kind idea, {self.child_name}. What should we do?"
+            feedback = "Try a story choice."
+        return {
+            "correct": ok,
+            "speak": speak,
+            "feedback": feedback,
+            "word_score": 1.0 if ok else 0.0,
+            "phoneme_score": 1.0 if ok else 0.0,
+        }
+
     def evaluate_mistake(self, transcript: str) -> dict[str, Any]:
         item = self.current_item()
         said = normalize_text(transcript)
         spoken = item.get("spoken", "")
         correct = item.get("correct", "")
         judged = self._llm_judge(transcript)
-        if judged is not None:
+        if is_kid_unsafe(transcript):
+            ok = False
+            issue = "kind-words"
+        elif judged is not None:
             ok = bool(judged["correct"])
             issue = "none" if ok else item.get("kind", "grammar")
         else:
@@ -1127,7 +1411,10 @@ class LanguageTutor:
             repeated_error = sim_broken >= sim_fix and not has_fix
             ok = bool(has_fix and covered >= 0.84 and sim_fix >= 0.7 and not repeated_error)
             issue = "none" if ok else item.get("kind", "grammar")
-        if ok:
+        if is_kid_unsafe(transcript):
+            speak = f"Let's use kind playground words, {self.child_name}."
+            feedback = "Kind words only, please."
+        elif ok:
             speak = f"Great job, {self.child_name}! That was the right way."
             feedback = f"Yes, {self.child_name} — that’s the fix."
         else:
@@ -1147,7 +1434,7 @@ class LanguageTutor:
 
     def _answer_phrase(self) -> str:
         item = self.current_item()
-        if self.state.mode == "complete":
+        if self._is_complete_like():
             return str(item.get("expected") or "that word")
         return str(item.get("correct") or "the right sentence")
 
@@ -1192,6 +1479,15 @@ class LanguageTutor:
         finally:
             self.busy = False
 
+    def _story_line(self, transcript: str) -> str:
+        idea = self._clean_phrase(transcript) or "help"
+        sit = str(self.current_item().get("situation") or self.current_item().get("stem") or "")
+        return kid_safe_line(f"{sit} They chose to {idea}.".strip())
+
+    def _narrate_story(self) -> str:
+        body = " ".join(self.state.story_sentences)
+        return f"Here is our whole story, {self.child_name}. {body} The end!"
+
     def _apply_next(self, parsed: dict[str, Any], correct: bool) -> None:
         if correct:
             candidate = parsed.get("next") if isinstance(parsed, dict) else None
@@ -1233,21 +1529,54 @@ class LanguageTutor:
             return events
         self.state.phase = "evaluating"
         events.append(TutorEvent("state", {"state": "thinking", "feedback": "Teddy is thinking…", "heard": transcript, **self.ui_snapshot()}))
-        rule = self.evaluate_completion(transcript) if self.state.mode == "complete" else self.evaluate_mistake(transcript)
+        if self.state.mode == "mistake":
+            rule = self.evaluate_mistake(transcript)
+        elif self._is_story():
+            rule = self.evaluate_story(transcript)
+        else:
+            rule = self.evaluate_completion(transcript)
         result = dict(rule)
         self.state.turns += 1
+        reward = False
+        celebrate = False
         if result["correct"]:
             self.state.streak += 1
             self.state.best = max(self.state.best, self.state.streak)
-            self._apply_next(result, True)
-            coach = f"{result['speak']} Okay, here comes the next one."
-            blocks = [coach, self.prompt_speech()]
+            celebrate = True
+            reward = self.state.streak > 0 and self.state.streak % STREAK_REWARD == 0
+            if self._is_story():
+                line = self._story_line(transcript)
+                self.state.story_sentences.append(line)
+                if len(self.state.story_sentences) >= STORY_CHAPTER_LEN:
+                    reward = True
+                    story = self._narrate_story()
+                    self.state.story_sentences = []
+                    self.state.chapter += 1
+                    self.invent_item()
+                    blocks = [
+                        f"Wonderful, {self.child_name}! Now let's hear the whole story.",
+                        story,
+                        "A brand new story is starting.",
+                        self.prompt_speech(),
+                    ]
+                else:
+                    self.invent_item()
+                    nxt = self.prompt_speech()
+                    blocks = [result["speak"], nxt]
+            else:
+                self._apply_next(result, True)
+                coach = f"{result['speak']} Okay, here comes the next one."
+                if reward:
+                    coach = f"Wow, {self.child_name}! That is {self.state.streak} in a row. Star party! {result['speak']}"
+                blocks = [coach, self.prompt_speech()]
         else:
             blocks = self._after_failure("wrong", str(result.get("speak") or ""))
         ui = self.ui_snapshot(
             {
-                "feedback": result["feedback"],
+                "feedback": "Great job! ⭐" if result["correct"] else result["feedback"],
                 "correct": result["correct"],
+                "reward": reward or celebrate,
+                "celebrate": celebrate,
                 "word_score": result.get("word_score"),
                 "phoneme_score": result.get("phoneme_score"),
                 "issue": result.get("issue"),

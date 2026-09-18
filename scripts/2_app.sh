@@ -14,4 +14,8 @@ fi
 conda activate sentence_coach
 set -u
 
+if command -v npm >/dev/null 2>&1 && [ -d ui-figma ]; then
+  (cd ui-figma && npm install --prefer-offline --no-audit --no-fund && npm run build)
+fi
+
 exec python main.py

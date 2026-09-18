@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="480" viewBox="0 0 980 480">
+<rect width="100%" height="100%" fill="#0f1419"/>
+<text x="490.0" y="28" fill="#e8eef4" text-anchor="middle" font-size="16" font-family="sans-serif">Performance by difficulty</text>
+<rect x="52.0" y="185.2" width="90.8" height="204.8" fill="#5b8def" rx="2"/>
+<rect x="165.5" y="109.7" width="90.8" height="280.3" fill="#3ccf91" rx="2"/>
+<text x="161.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">adversarial</text>
+<rect x="279.0" y="158.7" width="90.8" height="231.3" fill="#5b8def" rx="2"/>
+<rect x="392.5" y="82.7" width="90.8" height="307.3" fill="#3ccf91" rx="2"/>
+<text x="388.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">easy</text>
+<rect x="506.0" y="197.0" width="90.8" height="193.0" fill="#5b8def" rx="2"/>
+<rect x="619.5" y="97.8" width="90.8" height="292.2" fill="#3ccf91" rx="2"/>
+<text x="615.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">hard</text>
+<rect x="733.0" y="173.8" width="90.8" height="216.2" fill="#5b8def" rx="2"/>
+<rect x="846.5" y="92.4" width="90.8" height="297.6" fill="#3ccf91" rx="2"/>
+<text x="842.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">medium</text>
+<rect x="48" y="458" width="10" height="10" fill="#5b8def"/><text x="64" y="467" fill="#c5d0da" font-size="11" font-family="sans-serif">tinyllama-1.1b-chat</text>
+<rect x="188" y="458" width="10" height="10" fill="#3ccf91"/><text x="204" y="467" fill="#c5d0da" font-size="11" font-family="sans-serif">qwen2.5-7b-instruct-aw</text>
+</svg>

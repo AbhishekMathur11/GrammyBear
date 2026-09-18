@@ -11,4 +11,9 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/ws': { target: 'ws://127.0.0.1:8003', ws: true },
+    },
+  },
 })

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="480" viewBox="0 0 980 480">
+<rect width="100%" height="100%" fill="#0f1419"/>
+<text x="490.0" y="28" fill="#e8eef4" text-anchor="middle" font-size="16" font-family="sans-serif">Error / success mix (share of examples)</text>
+<rect x="52.0" y="330.3" width="90.8" height="59.7" fill="#5b8def" rx="2"/>
+<rect x="165.5" y="184.7" width="90.8" height="205.3" fill="#3ccf91" rx="2"/>
+<text x="161.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">complete</text>
+<rect x="279.0" y="330.3" width="90.8" height="59.7" fill="#5b8def" rx="2"/>
+<rect x="392.5" y="310.8" width="90.8" height="79.2" fill="#3ccf91" rx="2"/>
+<text x="388.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">minor</text>
+<rect x="506.0" y="293.4" width="90.8" height="96.6" fill="#5b8def" rx="2"/>
+<rect x="619.5" y="372.6" width="90.8" height="17.4" fill="#3ccf91" rx="2"/>
+<text x="615.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">substantive</text>
+<rect x="733.0" y="280.0" width="90.8" height="110.0" fill="#5b8def" rx="2"/>
+<rect x="846.5" y="365.9" width="90.8" height="24.1" fill="#3ccf91" rx="2"/>
+<text x="842.5" y="444" fill="#c5d0da" text-anchor="middle" font-size="9" font-family="sans-serif">major</text>
+<rect x="48" y="458" width="10" height="10" fill="#5b8def"/><text x="64" y="467" fill="#c5d0da" font-size="11" font-family="sans-serif">tinyllama-1.1b-chat</text>
+<rect x="188" y="458" width="10" height="10" fill="#3ccf91"/><text x="204" y="467" fill="#c5d0da" font-size="11" font-family="sans-serif">qwen2.5-7b-instruct-aw</text>
+</svg>

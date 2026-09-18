@@ -25,7 +25,7 @@ class ScriptedLLM:
         self.payload = payload
         self.calls = []
 
-    def complete(self, system: str, user: str, max_tokens: int = 220, temperature: float = 0.85) -> str:
+    def complete(self, system: str, user: str, max_tokens: int = 220, temperature: float = 0.85, **kwargs) -> str:
         self.calls.append((system, user, max_tokens))
         return self.payload
 
@@ -230,6 +230,15 @@ class TutorTests(unittest.TestCase):
         self.assertIn("Finish the Sentence", self.tutor._pending_line)
         self.assertNotIn("I'm Bella", self.tutor._pending_line)
 
+    def test_story_opening_sounds_like_story_time(self):
+        self.tutor.configure(name="Sam", voice="af_bella")
+        self.tutor.set_mode("story")
+        self.tutor.start_turn()
+        line = self.tutor._pending_line.lower()
+        self.assertIn("write a story", line)
+        self.assertIn("story adventure", line)
+        self.assertNotIn("complete sentences", line)
+
     def test_llm_accepts_another_valid_ending(self):
         llm = ScriptedLLM('{"correct": true}')
         tutor = LanguageTutor(llm=llm, stt=None, tts=None)
@@ -308,6 +317,49 @@ class TutorTests(unittest.TestCase):
     def test_similarity_bounds(self):
         self.assertEqual(similarity("a", "a"), 1.0)
         self.assertEqual(similarity("", "x"), 0.0)
+
+    def test_story_builds_then_narrates_and_rewards(self):
+        self.tutor.set_mode("story")
+        self.assertEqual(self.tutor.state.mode, "story")
+        self.tutor.item = {
+            "id": "open",
+            "stem": "Once upon a time a little bear found a magical",
+            "expected": "lantern",
+            "full": "Once upon a time a little bear found a magical lantern.",
+        }
+        for i in range(6):
+            self.tutor.item = {
+                "id": f"beat-{i}",
+                "stem": "Then they found a shiny",
+                "situation": "Then they found a shiny keyhole.",
+                "question": "What should they use?",
+                "expected": "key",
+                "full": "Then they found a shiny key.",
+            }
+            events = self.tutor.handle_transcript("key")
+            ui = next(e for e in events if e.type == "ui" and "correct" in e.payload)
+            self.assertTrue(ui.payload["correct"])
+        self.assertTrue(ui.payload.get("reward"))
+        self.assertIn("whole story", self.tutor._pending_line.lower())
+        self.assertEqual(self.tutor.state.story_sentences, [])
+        self.assertEqual(self.tutor.state.chapter, 2)
+
+    def test_guard_rejects_slang(self):
+        self.tutor.set_mode("complete")
+        self.tutor.item = copy.deepcopy(COMPLETION_ITEMS[0])
+        events = self.tutor.handle_transcript("stupid crap")
+        ui = next(e for e in events if e.type == "ui" and "correct" in e.payload)
+        self.assertFalse(ui.payload["correct"])
+        self.assertEqual(self.tutor.state.streak, 0)
+
+    def test_reward_after_five_sentence_wins(self):
+        self.tutor.set_mode("complete")
+        for i in range(5):
+            self.tutor.item = copy.deepcopy(COMPLETION_ITEMS[0])
+            events = self.tutor.handle_transcript("the food bowl")
+        ui = next(e for e in events if e.type == "ui" and e.payload.get("correct") is True)
+        self.assertTrue(ui.payload.get("reward"))
+        self.assertEqual(self.tutor.state.streak, 5)
 
 
 if __name__ == "__main__":
