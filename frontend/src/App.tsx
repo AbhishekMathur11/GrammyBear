@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { useTeddySession, type GameMode, type UiSnapshot } from './lib/useTeddySession'
 
 /* ─────────────────────────────────────────────────────────────
    TYPES
@@ -226,14 +227,16 @@ const VOICES: Voice[] = [
 ]
 
 function HomeScreen({
-  onSelect, childName, onNameChange, voiceId, onVoiceChange,
+  onSelect, childName, onNameChange, voiceId, onVoiceChange, voices,
 }: {
   onSelect: (g: 'complete' | 'mistake') => void
   childName: string
   onNameChange: (name: string) => void
   voiceId: string
   onVoiceChange: (id: string) => void
+  voices: Voice[]
 }) {
+  const voiceOptions = voices.length ? voices : VOICES
   return (
     <div
       className="flex flex-col h-full scroll-hide overflow-y-auto"
@@ -294,7 +297,7 @@ function HomeScreen({
             Teddy's voice
           </span>
           <div className="grid grid-cols-2 gap-2">
-            {VOICES.map(v => (
+            {voiceOptions.map(v => (
               <button
                 key={v.id}
                 type="button"
@@ -429,59 +432,6 @@ function HomeScreen({
 /* ─────────────────────────────────────────────────────────────
    SCREEN 2: AUDIO GAME
 ───────────────────────────────────────────────────────────── */
-const SENTENCE_STEPS = [
-  {
-    state: 'bear-speaking' as AudioState,
-    bearLabel: 'Teddy says:',
-    bearPrompt: 'Can you finish this sentence? 🎵',
-    ttsCard: 'I like to eat ___.',
-    sttCard: null,
-    feedbackText: null,
-  },
-  {
-    state: 'child-speaking' as AudioState,
-    bearLabel: 'I\'m listening… 👂',
-    bearPrompt: 'Your turn! Tell me what you eat!',
-    ttsCard: 'I like to eat ___.',
-    sttCard: 'I like to eat… apples!',
-    feedbackText: null,
-  },
-  {
-    state: 'feedback' as AudioState,
-    bearLabel: 'Wonderful! 🎉',
-    bearPrompt: 'You\'re so smart!',
-    ttsCard: 'I like to eat ___.',
-    sttCard: 'I like to eat apples.',
-    feedbackText: 'Great job! ⭐',
-  },
-]
-
-const MISTAKE_STEPS = [
-  {
-    state: 'bear-speaking' as AudioState,
-    bearLabel: 'Teddy says:',
-    bearPrompt: 'Can you catch my mistake? 🔍',
-    ttsCard: 'She don\'t like apples.',
-    sttCard: null,
-    feedbackText: null,
-  },
-  {
-    state: 'child-speaking' as AudioState,
-    bearLabel: 'Fix it for me! 👂',
-    bearPrompt: 'Say the sentence the right way!',
-    ttsCard: 'She don\'t like apples.',
-    sttCard: 'She doesn\'t like apples!',
-    feedbackText: null,
-  },
-  {
-    state: 'feedback' as AudioState,
-    bearLabel: 'You caught it! 🎉',
-    bearPrompt: 'Great ears!',
-    ttsCard: 'She don\'t like apples.',
-    sttCard: 'She doesn\'t like apples.',
-    feedbackText: 'Nailed it! ⭐',
-  },
-]
 
 /* ── Mic button ─────────────────────────────────────────────── */
 function MicButton({ state, onTap }: { state: AudioState; onTap: () => void }) {
@@ -541,26 +491,36 @@ function Confetti() {
   )
 }
 
-function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBack: () => void }) {
-  const steps   = game === 'complete' ? SENTENCE_STEPS : MISTAKE_STEPS
-  const [step, setStep] = useState(0)
+function AudioGameScreen({
+  game, ui, phase, onBack, onRepeat,
+}: {
+  game: 'complete' | 'mistake'
+  ui: UiSnapshot
+  phase: string
+  onBack: () => void
+  onRepeat: () => void
+}) {
+  const isListening = phase === 'listening'
+  const isThinking  = phase === 'thinking'
+  const hasJudgment = ui.correct !== undefined
+  const isFb        = hasJudgment
+  const isBear       = !isListening
+  const micState: AudioState = hasJudgment && ui.correct ? 'feedback' : isListening ? 'child-speaking' : 'bear-speaking'
+
   const [showFx, setShowFx] = useState(false)
-
-  const cur     = steps[step]
-  const isLast  = step === steps.length - 1
-  const isFb    = cur.state === 'feedback'
-  const isBear  = cur.state === 'bear-speaking'
-  const isChild = cur.state === 'child-speaking'
-
   useEffect(() => {
-    if (isFb) { setTimeout(() => setShowFx(true), 80) }
-    else       { setShowFx(false) }
-  }, [step])
+    if (hasJudgment) {
+      const t = setTimeout(() => setShowFx(true), 80)
+      return () => clearTimeout(t)
+    }
+    setShowFx(false)
+  }, [hasJudgment, ui.item_id])
 
-  function advance() {
-    if (!isLast) setStep(s => s + 1)
-    else         { setStep(0); setShowFx(false) }
-  }
+  const ttsCard = ui.prompt || ui.feedback || 'Getting ready…'
+  const sttCard = ui.heard || null
+  const bearLabel = isListening ? 'I\'m listening… 👂' : isThinking ? 'Thinking…' : 'Teddy says:'
+  const bearPrompt = ui.feedback || (isListening ? 'Your turn!' : 'Here we go!')
+  const feedbackText = hasJudgment ? (ui.correct ? 'Great job! ⭐' : 'Almost! Try again') : null
 
   const accent = game === 'complete' ? '#F97316' : '#06B6D4'
   const bg     = game === 'complete'
@@ -582,19 +542,15 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
         <p className="font-display text-purple-700" style={{ fontSize: 17, fontWeight: 700 }}>
           {game === 'complete' ? 'Finish the Sentence' : 'Catch the Mistake'}
         </p>
-        {/* Progress dots */}
-        <div className="flex gap-1.5 items-center">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all duration-300"
-              style={{
-                width: i === step ? 22 : 8,
-                height: 8,
-                background: i === step ? accent : 'rgba(167,139,250,0.35)',
-              }}
-            />
-          ))}
+        {/* Streak */}
+        <div
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full"
+          style={{ background: 'rgba(255,255,255,0.85)' }}
+        >
+          <span style={{ fontSize: 14 }}>🔥</span>
+          <span className="font-display" style={{ fontSize: 14, fontWeight: 700, color: accent }}>
+            {ui.streak ?? 0}
+          </span>
         </div>
       </div>
 
@@ -607,10 +563,10 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
           <div className="bubble-breathe">
             <Bubble color="white" tail="left">
               <p className="text-purple-600 font-black leading-tight" style={{ fontSize: 12 }}>
-                {cur.bearLabel}
+                {bearLabel}
               </p>
               <p className="font-display text-purple-800 leading-snug mt-0.5" style={{ fontSize: 15, fontWeight: 600 }}>
-                {cur.bearPrompt}
+                {bearPrompt}
               </p>
             </Bubble>
           </div>
@@ -638,7 +594,7 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
             </span>
           </div>
           <p className="font-display text-purple-900 leading-snug" style={{ fontSize: 24, fontWeight: 700 }}>
-            {cur.ttsCard}
+            {ttsCard}
           </p>
           <div className="mt-3 flex items-center gap-3">
             <SoundWave active={isBear} color="#9333EA" />
@@ -656,7 +612,7 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
           >
             <Confetti />
             <p className="font-display text-yellow-800 text-center" style={{ fontSize: 32, fontWeight: 700 }}>
-              {cur.feedbackText}
+              {feedbackText}
             </p>
             <p className="text-yellow-700 font-black text-center text-sm mt-1">
               You're amazing! 🌟
@@ -665,11 +621,11 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
         )}
 
         {/* STT card — child's response */}
-        {cur.sttCard && (
+        {sttCard && (
           <div
             className="w-full rounded-[24px] p-5 card-lift slide-up relative overflow-hidden"
             style={{
-              background: isChild
+              background: isListening
                 ? 'linear-gradient(135deg, #DCFCE7 0%, #A7F3D0 100%)'
                 : 'linear-gradient(135deg, #F0FDF4 0%, #D1FAE5 100%)',
               borderTop: '2px solid rgba(255,255,255,0.75)',
@@ -681,15 +637,15 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
                 className="font-black uppercase tracking-widest text-green-600"
                 style={{ fontSize: 10 }}
               >
-                {isChild ? 'Listening…' : 'You said'}
+                {isListening ? 'Listening…' : 'You said'}
               </span>
             </div>
             <p className="font-display text-green-900 leading-snug" style={{ fontSize: 22, fontWeight: 700 }}>
-              {cur.sttCard}
+              {sttCard}
             </p>
             <div className="mt-3 flex items-center gap-3">
-              <SoundWave active={isChild} color="#16A34A" />
-              {isChild && (
+              <SoundWave active={isListening} color="#16A34A" />
+              {isListening && (
                 <span className="text-green-500 font-bold text-xs animate-pulse">recording…</span>
               )}
             </div>
@@ -700,14 +656,12 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
       {/* ── Mic + action ───────────────────────── */}
       <div className="flex flex-col items-center gap-2 py-5 flex-shrink-0">
         <p className="font-bold text-purple-400" style={{ fontSize: 13 }}>
-          {isBear  ? '🔊 Teddy is speaking…'
-          : isChild ? 'Tap the mic when you\'re done!'
-          :           isLast ? 'Tap to play again! 🔄' : 'Great! Tap next ▶'}
+          {isListening ? 'Your turn — I\'m listening!' : isThinking ? '🤔 Teddy is thinking…' : '🔊 Teddy is speaking…'}
         </p>
-        <MicButton state={cur.state} onTap={advance} />
-        {!isChild && (
+        <MicButton state={micState} onTap={() => { if (!isListening) onRepeat() }} />
+        {!isListening && (
           <button
-            onClick={advance}
+            onClick={onRepeat}
             className="mt-1 px-8 py-3 rounded-2xl btn-press font-display text-white shine-btn"
             style={{
               fontSize: 18, fontWeight: 700,
@@ -715,7 +669,7 @@ function AudioGameScreen({ game, onBack }: { game: 'complete' | 'mistake'; onBac
               boxShadow: `0 5px 0 #5B21B6, 0 8px 20px rgba(124,58,237,0.35)`,
             }}
           >
-            {isFb && isLast ? 'Play again! 🎵' : 'Next ▶'}
+            Hear it again 🔁
           </button>
         )}
       </div>
@@ -730,6 +684,17 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [childName, setChildName] = useState('')
   const [voiceId, setVoiceId] = useState('af_bella')
+  const [session, actions] = useTeddySession()
+
+  function handleSelect(mode: GameMode) {
+    actions.start(mode, childName, voiceId)
+    setScreen(mode)
+  }
+
+  function handleBack() {
+    actions.stop()
+    setScreen('home')
+  }
 
   return (
     <div
@@ -791,17 +756,32 @@ export default function App() {
           <div style={{ position: 'absolute', top: 46, left: 0, right: 0, bottom: 0 }}>
             {screen === 'home' && (
               <HomeScreen
-                onSelect={g => setScreen(g)}
+                onSelect={handleSelect}
                 childName={childName}
                 onNameChange={setChildName}
                 voiceId={voiceId}
                 onVoiceChange={setVoiceId}
+                voices={session.voices}
               />
             )}
             {(screen === 'complete' || screen === 'mistake') && (
-              <AudioGameScreen game={screen} onBack={() => setScreen('home')} />
+              <AudioGameScreen
+                game={screen}
+                ui={session.ui}
+                phase={session.phase}
+                onBack={handleBack}
+                onRepeat={actions.repeat}
+              />
             )}
           </div>
+          {session.error && (
+            <div
+              className="absolute left-3 right-3 rounded-2xl px-4 py-2 text-center font-bold"
+              style={{ bottom: 12, background: 'rgba(220,38,38,0.92)', color: 'white', fontSize: 12, zIndex: 20 }}
+            >
+              {session.error}
+            </div>
+          )}
         </div>
 
         {/* Phone side buttons */}

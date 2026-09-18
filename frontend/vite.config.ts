@@ -11,4 +11,11 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    // Dev-only: proxies WebSocket calls to the real backend (main.py, port 8003)
+    // so `npm run dev` can talk to the live app without any changes there.
+    proxy: {
+      '/ws': { target: 'ws://localhost:8003', ws: true },
+    },
+  },
 })
