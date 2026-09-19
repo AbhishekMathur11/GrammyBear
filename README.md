@@ -1,112 +1,170 @@
-# TeddyTalk: AI Language Learning Buddy
+<p align="center">
+  <img src="docs/banner.png" alt="GrammyBear — Bella the Teddy buddy" width="920"/>
+</p>
+<p align="center">
+  <img src="docs/bella.svg" alt="Bella the Teddy buddy" width="168"/>
+</p>
+<p align="center">
+  <strong>Meet Bella.</strong> She is the teddy buddy inside <strong>GrammyBear</strong> — a voice-first English tutor for ages 5–8.<br/>
+  Built for the <a href="https://hackathon.nerdy.com/">Nerdy AI Hackathon Challenge</a>. Learning that lives in the living room, not a worksheet.
+</p>
 
-TeddyTalk is a low-latency language tutor for kids. One teddy, two voice games, **one WebSocket**, **one UI** (the Figma React screen, built into `ui-figma/dist` and served by FastAPI). Catch-the-Mistake stays in the tutor code but is not on this home screen.
+---
 
-The browser streams 16 kHz PCM from the Web Audio API every 250ms. FastAPI runs STT, asks vLLM (Qwen) to **judge** the answer and **invent the next prompt**, then speaks with Kokoro — all in memory.
+# GrammyBear
 
-## Architecture
+**Bella the Teddy buddy** is GrammyBear: she hears the child, decides if the answer works, and talks back in a warm kid voice. No typing. No multiple choice. Two games, a name on the home screen, and a cheer when they get it right.
+
+---
+
+## What it is
+
+Kids this age do not want to tap through flashcards. They want to *say* the word. Bella (GrammyBear) is a phone-friendly tutor that:
+
+1. Asks for the child’s **name**, then uses it.
+2. Plays **Finish the Sentence** — a missing word (noun, verb, and friends). Close synonyms count; there is no rigid answer key.
+3. Plays **Guess the Synonym** — a full sentence, then “what’s another word for ___?”
+4. Keeps a **star / high score**, celebrates a correct turn, and moves on by itself.
+5. Treats unsafe speech as a **safety** problem, not a wrong grammar score (kind words, no scary or adult topics, get a grown-up when it really matters).
+
+The judge is the on-device language model, not a list of canned answers. “Glad” can count for “happy.” “Table” can count if it still finishes the sentence well.
+
+---
+
+## How a turn works
 
 ```
-Browser  (FastAPI serves ui-figma/dist)
-  getUserMedia → AudioContext PCM 16 kHz / 250ms
-  AudioContext.decodeAudioData ← WAV
-        │  wss://<cloudflare-tunnel>/ws
-        ▼
-FastAPI  port 8003
-        ├─ Faster-Whisper tiny.en on CPU  (leaves the 5070 for vLLM)
-        ├─ vLLM on :8000                  (Qwen/Qwen2.5-14B-Instruct-AWQ)
-        └─ Kokoro ONNX                    (TTS in RAM)
+Child speaks into the phone
+        ↓
+GrammyBear hears the words  (speech-to-text)
+        ↓
+Safety check, then “is this a fair answer?”  (language model)
+        ↓
+GrammyBear talks  (text-to-speech)  and shows the next sentence
 ```
 
-Cloudflare Tunnel publishes FastAPI only. Do not tunnel vLLM.
+Only **one** public website is shared. The heavy model stays on the GPU computer and is never exposed to the internet.
 
-### Why vLLM died at `--gpu-memory-utilization 0.50`
+```
+Phone or laptop  ──HTTPS──►  App (port 8003)
+                                   ├─ listens / speaks
+                                   └─ asks the local model (port 8000) in private
+```
 
-That flag was unrelated to Cloudflare. The 14B AWQ weights need almost all of the 12GB card. Use `scripts/1_vllm.sh`: `Qwen/Qwen2.5-14B-Instruct-AWQ`, utilization **0.88**, `max-model-len 512`, `--enforce-eager`, `max-num-seqs 1`. Marlin unpack is disabled (`VLLM_BATCH_INVARIANT=1`) so vLLM does not OOM while converting AWQ weights. Whisper stays on CPU so it does not fight vLLM.
-
-### Learning modes
-
-1. **Sentence finish** — Teddy speaks a stem. You complete it. Qwen judges freely (not a fixed script) and invents a new stem.
-2. **Story Adventure** — Teddy starts a fill-in-the-blank line. Any kid-safe ending is fine. The next line continues the tale. After five good beats, Teddy narrates the whole chapter (star-party popup). Catch-the-Mistake remains in the backend unused by this UI.
-
-If vLLM is down, a shuffled backup bank is used so the game still runs.
-
-## Stack
-
-| Layer | Choice |
+| Piece | Role, in plain words |
 | --- | --- |
-| GPU | RTX 5070 12GB, almost all for vLLM |
-| Env | Conda `sentence_coach` |
-| UI | Figma React (`ui-figma/`), built by `scripts/2_app.sh`, served from FastAPI |
-| STT | Faster-Whisper `tiny.en` CPU |
-| LLM | vLLM `Qwen/Qwen2.5-14B-Instruct-AWQ` |
-| TTS | Kokoro ONNX under `audio_utils/tts/kokoro-tts/models` (read-only) |
+| Screen | Colorful phone UI (React). Mic, bear, sentence card, star. |
+| App | Python server that glues everything together. |
+| Ears | Speech-to-text on the **CPU**, so the GPU stays free for thinking. |
+| Brain | Local Qwen 14B model (compressed to fit ~12 GB of GPU memory). |
+| Voice | Kokoro — a small, fast spoken voice (Bella by default). |
 
-`audio_test/`, `audio_utils/`, and `gemma_test/` are left unchanged.
+If the model is briefly down, a backup bank of sentences keeps the game moving.
 
-## How to run (3 terminals)
+---
 
-From the repo, after `conda activate sentence_coach` once in your life and with **ffmpeg** + **cloudflared** installed:
+## What you need
 
-**Terminal 1 — LLM** (wait until it is serving on 8000; first start can take several minutes):
+- A **Linux PC with an NVIDIA GPU** (this project was tuned on an RTX 5070 with 12 GB). A similar 12 GB card should work with the bundled start script.
+- **Conda** environment `sentence_coach` (see `environment.yml`).
+- **ffmpeg** (for audio).
+- **Node.js / npm** (to build the screen once).
+- For a **phone on the same Wi‑Fi or anywhere else:** a public **HTTPS** link (`./scripts/3_tunnel.sh`). Browsers usually **block the microphone on plain `http://`**.
+
+First model download can take several minutes. Leave Terminal 1 running until it says it is listening on port 8000.
+
+---
+
+## Run it (three terminals)
+
+From this folder, after you have created the conda env once:
 
 ```bash
+conda env create -f environment.yml   # first time only
+conda activate sentence_coach
 chmod +x scripts/*.sh
+```
+
+**Terminal 1 — the brain** (wait until it is serving):
+
+```bash
 ./scripts/1_vllm.sh
 ```
 
-**Terminal 2 — app** (only after Terminal 1 is healthy):
+**Terminal 2 — the app** (after Terminal 1 is healthy):
 
 ```bash
 ./scripts/2_app.sh
 ```
 
-This PC only: [http://localhost:8003](http://localhost:8003)
+On **this same computer:** [http://localhost:8003](http://localhost:8003)
 
-**Terminal 3 — public HTTPS** (required for the mic on any other phone/laptop):
+**Terminal 3 — phones and other laptops** (HTTPS, required for the mic):
 
 ```bash
 ./scripts/3_tunnel.sh
 ```
 
-Leave all three scripts running on **this** GPU PC. vLLM stays on `http://127.0.0.1:8000` and is not tunneled.
+Leave all three running on the **GPU PC**. Do **not** put the brain (port 8000) on the public internet.
 
 ### Another phone or laptop
 
-Do **not** open `http://localhost` on that device. Localhost there is that device, not this PC.
+Do **not** open `localhost` on that device — that is *that* device, not this PC.
 
-Other devices: open **[https://teddytalk.loca.lt](https://teddytalk.loca.lt)** (named by `scripts/3_tunnel.sh`). If loca.lt shows a click-through page, tap Continue once, then allow the mic.
+Open the HTTPS URL the tunnel prints (default named link: **https://teddytalk.loca.lt**). If you see a click-through page, tap Continue once, then **allow the microphone**.
 
-To use your own domain instead, set `CLOUDFLARED_TUNNEL_TOKEN` and put that hostname in `config.json` → `tunnel.public_url`.
+Same Wi‑Fi `http://<this-PC-IP>:8003` can show the page, but the **mic often fails** until you use HTTPS.
 
-`http://<this-PC-LAN-IP>:8003` can load the page on the same Wi‑Fi, but browsers usually **block the mic** on plain HTTP. Use the HTTPS URL for voice.
+To use your own hostname, set `CLOUDFLARED_TUNNEL_TOKEN` and put that URL in `config.json` → `tunnel.public_url`.
 
-`scripts/2_app.sh` runs `npm run build` in `ui-figma` then starts FastAPI. Do not run a second frontend server.
+`scripts/2_app.sh` builds the UI and starts the server. Do not start a second frontend.
 
-## Protocol
+---
 
-* JSON: `start` (mode, name, voice), `ready`, `idle` (no speech for ~8s), `state`, `ui`, `transcript`
-* Binary up: int16 PCM @ 16 kHz
-* Binary down: WAV after `{"type":"audio"}`
+## In the session
 
-Type the child’s name and pick a Kokoro voice (Bella, Emma, Sky, or Michael) before starting a game. Teddy introduces itself **once**, then **explains the chosen game every time you switch modes**. Qwen judges whether an answer is a reasonable fit (not one canned word). New sentences are generated each turn.
+- Type the child’s name on the name screen (remembered on that browser).
+- Pick a game. GrammyBear introduces herself **once**, then explains the game when you switch.
+- Speak after she finishes. The mic is ignored while she is talking, so she does not grade her own voice.
+- A correct answer gets a short cheer, then the next sentence. Wrong answers get a nudge, not a popup.
 
-The socket ignores your mic until `ready`, so Teddy’s own voice is not scored as your answer.
+---
 
-## Tests
+## Checks and evals
+
+Tutor unit tests (no GPU required):
 
 ```bash
 conda activate sentence_coach
 python -m unittest tests.test_agent -v
 ```
 
-## Troubleshooting
+Gold-set evals (brain must be up). From `sentence_coach`, or from `base` — the scripts will hop into `sentence_coach` if needed:
 
-* **`syntax error near unexpected token '('`** — old script quoting. Use the updated `./scripts/1_vllm.sh` (run it with bash, not `sh`).
-* **`Could not find nvcc` / FlashInfer JIT** — you do not need a full CUDA toolkit. The script now sets `VLLM_USE_FLASHINFER_SAMPLER=0` so warmup uses PyTorch sampling. KV cache at 0.82 is fine on the 5070 (~3.8 GiB).
-* **vLLM KV cache / no memory for cache blocks** — you are still on 0.50 utilization or CUDA graphs. Use `./scripts/1_vllm.sh`. Close other GPU apps (`nvidia-smi`).
-* **Long silence after you speak** — old WebM concat never decoded. This build sends PCM and shows **Thinking** as soon as an utterance is detected.
-* **Whisper + vLLM OOM** — keep STT on CPU in `config.json` (`"device": "cpu"`).
-* **No teddy voice** — leave Kokoro files where they are.
+```bash
+python evals/safety/run_eval.py    # kid-safety labels
+python evals/games/run_eval.py     # answer judging
+# or both:
+python evals/run_all.py
+```
 
-Built for the Nerdy AI Hackathon Challenge 2026.
+Results land next to each suite: `results.json`, `metrics.json`, `report.md`.
+
+---
+
+## If something goes wrong
+
+| What you see | What to do |
+| --- | --- |
+| `syntax error near unexpected token '('` | Run `./scripts/1_vllm.sh` with bash, not `sh`. |
+| GPU out of memory / vLLM dies while loading | Close other GPU apps. Use the bundled `1_vllm.sh` (it is already tuned for 12 GB). Keep speech-to-text on CPU in `config.json`. |
+| Long wait after the child speaks | Let Terminal 1 finish warming up. Do not start the app before 8000 is listening. |
+| No teddy voice | Keep the Kokoro files under `audio_utils/tts/kokoro-tts/models`. |
+| Mic blocked on a phone | You are on HTTP. Use the HTTPS tunnel URL. |
+| Evals say they cannot reach the judge / missing `openai` | Activate `sentence_coach` (or just re-run; the eval scripts switch env for you). |
+
+`audio_test/`, `audio_utils/`, and `gemma_test/` are supporting trees — leave them as they are.
+
+---
+
+Nerdy AI Hackathon Challenge 2026 · Prompt: language learning for a real child, demoable in a couple of minutes.
