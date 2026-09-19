@@ -900,7 +900,9 @@ SYSTEM_INVENT_STORY = textwrap.dedent("""\
     You are Teddy for kids ages 5-8. Invent one short kid-safe sentence that contains
     exactly one clear describing word (do not name the part of speech).
     target is that describing word, copied from the sentence.
-    JSON only: {"sentence":"The happy puppy ran to the park.","target":"happy"}
+    synonym is a different kid-safe word that means about the same as target.
+    synonym must never be target, never an inflection of target, and must truly mean the same thing.
+    JSON only: {"sentence":"The happy puppy ran to the park.","target":"happy","synonym":"glad"}
 """)
 
 SYSTEM_JUDGE_COMPLETE = textwrap.dedent("""\
@@ -924,11 +926,13 @@ SYSTEM_JUDGE_STORY = textwrap.dedent("""\
     You are Teddy judging a word-meaning game for kids ages 5-8.
     The child must say another word that means about the same as target_word
     in the sentence. Do not mention grammar terms.
-    Be very generous: synonyms, near-synonyms, kid wording, "very X", or a
-    simple phrase with the same meaning all count. Repeating the exact target
-    word is not enough. Reject unrelated words, slang, or unsafe speech.
-    If correct, invent the NEXT unique sentence+target (a different describing word).
-    JSON only: {"correct": true/false, "next": {"sentence":"...","target":"..."}}
+    Be very generous: synonyms, near-synonyms, kid wording, or a
+    simple phrase with the same meaning all count.
+    Repeating target_word, or a form of it, is never correct — that is not another word.
+    Reject unrelated words, slang, or unsafe speech.
+    If correct, invent the NEXT unique sentence+target (a different describing word)
+    and a synonym that is a different real word with the same meaning.
+    JSON only: {"correct": true/false, "next": {"sentence":"...","target":"...","synonym":"..."}}
 """)
 
 
@@ -1102,11 +1106,15 @@ class LanguageTutor:
         if self._is_story():
             sentence = polish_spoken(str(data.get("sentence") or data.get("stem") or data.get("situation") or ""))
             target = self._clean_phrase(data.get("target") or data.get("expected") or "").lower()
+            synonym = self._clean_phrase(data.get("synonym") or "").lower()
+            if not synonym or synonym == target:
+                synonym = ""
             speak = f"{sentence} What's another word for {target}?" if sentence and target else sentence
             return {
                 "id": data.get("id") or f"{target}:{sentence.lower()[:40]}",
                 "sentence": sentence,
                 "target": target,
+                "synonym": synonym,
                 "speak": speak,
                 "stem": sentence,
                 "prompt": speak,
@@ -1219,7 +1227,8 @@ class LanguageTutor:
             system = SYSTEM_INVENT_STORY
             user = (
                 f"Theme flavor: {theme}. Banned: {banned}. "
-                f"Invent one unique sentence with one describing word as target."
+                f"Invent one unique sentence with one describing word as target "
+                f"and a different synonym for that word."
             )
             raw = self.llm.complete(system, user, max_tokens=80, temperature=0.8)
         elif self._is_complete_like():
@@ -1632,7 +1641,11 @@ class LanguageTutor:
         if self._is_complete_like():
             return str(item.get("expected") or "that word")
         if self._is_story():
-            return str(item.get("target") or item.get("expected") or "that word")
+            sample = self._clean_phrase(item.get("synonym") or "").lower()
+            target = self._clean_phrase(item.get("target") or item.get("expected") or "").lower()
+            if sample and sample != target:
+                return sample
+            return "a different word that means the same"
         return str(item.get("correct") or "the right sentence")
 
     def _after_failure(self, reason: str, coach: Optional[str] = None) -> list[str]:
