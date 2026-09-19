@@ -5,21 +5,20 @@
   <img src="docs/bella.svg" alt="Bella the Teddy buddy" width="168"/>
 </p>
 <p align="center">
-  <strong>Meet Bella.</strong> She is the teddy buddy inside <strong>GrammyBear</strong> — a voice-first English tutor for ages 5–8.<br/>
-  Built for the <a href="https://hackathon.nerdy.com/">Nerdy AI Hackathon Challenge</a>. Learning that lives in the living room, not a worksheet.
+  <strong>Meet Bella.</strong> She is the <strong>GrammyBear</strong> — a voice-first English tutor for ages 5–8.<br/>
+  Built for the <a href="https://hackathon.nerdy.com/">Nerdy AI Hackathon Challenge</a>
 </p>
-
 ---
 
 # GrammyBear
 
-**Bella the Teddy buddy** is GrammyBear: she hears the child, decides if the answer works, and talks back in a warm kid voice. No typing. No multiple choice. Two games, a name on the home screen, and a cheer when they get it right.
+**Bella the Teddy buddy** is a GrammyBear and loves teaching little kids english grammar: she hears the child, decides if the answer works, and talks back in a warm kid voice. No typing. No multiple choice. Two games, a name on the home screen, and a cheer when they get it right.
 
 ---
 
 ## What it is
 
-Kids this age do not want to tap through flashcards. They want to *say* the word. Bella (GrammyBear) is a phone-friendly tutor that:
+Kids this age do not want to tap through flashcards. They want to *say* the word. Bella the GrammyBear is a phone-friendly tutor that:
 
 1. Asks for the child’s **name**, then uses it.
 2. Plays **Finish the Sentence** — a missing word (noun, verb, and friends). Close synonyms count; there is no rigid answer key.
@@ -28,6 +27,32 @@ Kids this age do not want to tap through flashcards. They want to *say* the word
 5. Treats unsafe speech as a **safety** problem, not a wrong grammar score (kind words, no scary or adult topics, get a grown-up when it really matters).
 
 The judge is the on-device language model, not a list of canned answers. “Glad” can count for “happy.” “Table” can count if it still finishes the sentence well.
+
+---
+
+## A look inside
+
+Bella on a phone: home, a live sentence, then a cheer.
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="pics/bear1.png" alt="Home screen — Hi Abhishek, choose Finish the Sentence or Guess the Synonym"/>
+      <br/>
+      <em>Home — pick a game</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="pics/bear3.png" alt="Finish the Sentence — The hungry puppy ran toward the blank"/>
+      <br/>
+      <em>Finish the Sentence — Bella speaking</em>
+    </td>
+    <td align="center" width="33%">
+      <img src="pics/bear2.png" alt="Guess the Synonym — You are awesome after the child said soft"/>
+      <br/>
+      <em>Guess the Synonym — a correct cheer</em>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -65,7 +90,7 @@ If the model is briefly down, a backup bank of sentences keeps the game moving.
 
 ## What you need
 
-- A **Linux PC with an NVIDIA GPU** (this project was tuned on an RTX 5070 with 12 GB). A similar 12 GB card should work with the bundled start script.
+- A **Linux PC with an NVIDIA GPU** (this project was tuned on an RTX 5070 with 12 GB VRAM). A similar 12 GB card should work with the bundled start script or even a cloud based GPU can work.
 - **Conda** environment `sentence_coach` (see `environment.yml`).
 - **ffmpeg** (for audio).
 - **Node.js / npm** (to build the screen once).
