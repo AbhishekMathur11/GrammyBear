@@ -34,25 +34,23 @@ The judge is the on-device language model, not a list of canned answers. “Glad
 
 Bella on a phone: home, a live sentence, then a cheer.
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="pics/bear1.png" alt="Home screen — Hi Abhishek, choose Finish the Sentence or Guess the Synonym"/>
-      <br/>
-      <em>Home — pick a game</em>
-    </td>
-    <td align="center" width="33%">
-      <img src="pics/bear3.png" alt="Finish the Sentence — The hungry puppy ran toward the blank"/>
-      <br/>
-      <em>Finish the Sentence — Bella speaking</em>
-    </td>
-    <td align="center" width="33%">
-      <img src="pics/bear2.png" alt="Guess the Synonym — You are awesome after the child said soft"/>
-      <br/>
-      <em>Guess the Synonym — a correct cheer</em>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="pics/bear1.png" alt="Home screen — Hi Abhishek, choose Finish the Sentence or Guess the Synonym" width="720"/>
+  <br/>
+  <em>Home — pick a game</em>
+</p>
+
+<p align="center">
+  <img src="pics/bear3.png" alt="Finish the Sentence — The hungry puppy ran toward the blank" width="720"/>
+  <br/>
+  <em>Finish the Sentence — Bella speaking</em>
+</p>
+
+<p align="center">
+  <img src="pics/bear2.png" alt="Guess the Synonym — You are awesome after the child said soft" width="720"/>
+  <br/>
+  <em>Guess the Synonym — a correct cheer</em>
+</p>
 
 ---
 
